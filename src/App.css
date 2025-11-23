@@ -1,0 +1,42 @@
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.logo {
+  height: 3.5rem;
+  padding: 0.5rem;
+  will-change: filter;
+  transition: filter 200ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 0.8em #646cff66);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 0.8em #61dafb66);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
