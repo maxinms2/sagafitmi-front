@@ -1,16 +1,35 @@
 import React, { useState } from 'react'
+import { login as loginRequest } from '../services/auth'
+import { setToken } from '../services/storage'
 
 type Props = { onBack?: () => void }
 
 export default function Login({ onBack }: Props) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Login attempt', { email, password })
-    // Aquí iría la lógica real de autenticación
-    alert('Login enviado (simulado)')
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await loginRequest({ email, password })
+      if (res.token) {
+        setToken(res.token)
+        console.log('Login successful, token saved')
+        if (onBack) onBack()
+        else alert('Login correcto')
+      } else {
+        throw new Error('Respuesta inválida: no se recibió token')
+      }
+    } catch (err: any) {
+      console.error('Login error', err)
+      setError(err?.message || 'Error durante el login')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -30,6 +49,7 @@ export default function Login({ onBack }: Props) {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
 
@@ -41,13 +61,22 @@ export default function Login({ onBack }: Props) {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
 
+                  {error && (
+                    <div className="alert alert-danger" role="alert">
+                      {error}
+                    </div>
+                  )}
+
                   <div className="d-flex justify-content-between align-items-center">
-                    <button type="submit" className="btn btn-primary">Entrar</button>
+                    <button type="submit" className="btn btn-primary" disabled={loading}>
+                      {loading ? 'Entrando...' : 'Entrar'}
+                    </button>
                     {onBack && (
-                      <button type="button" className="btn btn-link" onClick={onBack}>
+                      <button type="button" className="btn btn-link" onClick={onBack} disabled={loading}>
                         Volver
                       </button>
                     )}
