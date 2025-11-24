@@ -1,10 +1,18 @@
-import React from 'react'
-
 type Props = {
   onNavigate?: (page: 'home' | 'login') => void
+  user?: string | null
+  onLogout?: () => void
 }
 
-export default function NavBar({ onNavigate }: Props) {
+export default function NavBar({ onNavigate, user, onLogout }: Props) {
+  const handleLogout = () => {
+    try {
+      onLogout?.()
+    } catch (e) {
+      console.warn('Error during logout', e)
+    }
+    onNavigate?.('home')
+  }
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
       <div className="container-fluid px-3 px-md-4">
@@ -16,16 +24,25 @@ export default function NavBar({ onNavigate }: Props) {
 
           <div className="d-flex align-items-center">
             <nav className="nav">
-              <a
-                className="nav-link text-secondary px-3"
-                href="#login"
-                onClick={e => {
-                  e.preventDefault()
-                  onNavigate?.('login')
-                }}
-              >
-                Login
-              </a>
+              {user ? (
+                <>
+                  <span className="nav-link text-secondary px-3">{user}</span>
+                  <button className="btn btn-link text-danger px-3" onClick={handleLogout}>
+                    Cerrar sesión
+                  </button>
+                </>
+              ) : (
+                <a
+                  className="nav-link text-secondary px-3"
+                  href="#login"
+                  onClick={e => {
+                    e.preventDefault()
+                    onNavigate?.('login')
+                  }}
+                >
+                  Login
+                </a>
+              )}
             </nav>
             <div className="vr mx-2" aria-hidden="true" style={{height: '28px'}}></div>
             <nav className="nav">

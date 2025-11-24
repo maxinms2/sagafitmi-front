@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react'
 import { login as loginRequest } from '../services/auth'
-import { setToken } from '../services/storage'
+import { setToken, setUser as setUserInStorage } from '../services/storage'
 
-type Props = { onBack?: () => void }
+type Props = { onBack?: () => void; onLogin?: (email: string) => void }
 
-export default function Login({ onBack }: Props) {
+export default function Login({ onBack, onLogin }: Props) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,6 +19,9 @@ export default function Login({ onBack }: Props) {
       const res = await loginRequest({ email, password })
       if (res.token) {
         setToken(res.token)
+        // actualizar el estado externo si se proporciona, sino persistir localmente
+        if (onLogin) onLogin(email)
+        else setUserInStorage(email)
         console.log('Login successful, token saved')
         if (onBack) onBack()
         else alert('Login correcto')
