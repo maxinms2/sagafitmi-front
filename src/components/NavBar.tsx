@@ -1,5 +1,5 @@
 type Props = {
-  onNavigate?: (page: 'home' | 'login') => void
+  onNavigate?: (page: 'home' | 'login' | 'register') => void
   user?: string | null
   onLogout?: () => void
 }
@@ -13,6 +13,7 @@ export default function NavBar({ onNavigate, user, onLogout }: Props) {
     }
     onNavigate?.('home')
   }
+  
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
       <div className="container-fluid px-3 px-md-4">
@@ -22,7 +23,7 @@ export default function NavBar({ onNavigate, user, onLogout }: Props) {
             <span className="fw-semibold fs-5 mb-0">Sagafitmi</span>
           </a>
 
-          <div className="d-flex align-items-center">
+          <div className="d-flex align-items-center position-relative">
             <nav className="nav">
               {user ? (
                 <>
@@ -32,18 +33,24 @@ export default function NavBar({ onNavigate, user, onLogout }: Props) {
                   </button>
                 </>
               ) : (
-                <a
-                  className="nav-link text-secondary px-3"
-                  href="#login"
-                  onClick={e => {
-                    e.preventDefault()
-                    onNavigate?.('login')
-                  }}
-                >
-                  Login
-                </a>
+                <>
+                  <a
+                    className="nav-link text-secondary px-3"
+                    href="#login"
+                    onClick={e => {
+                      e.preventDefault()
+                      onNavigate?.('login')
+                    }}
+                  >
+                    Iniciar Sesión
+                  </a>
+                  <button className="btn btn-link text-primary px-3" onClick={e => { e.preventDefault(); onNavigate?.('register') }}>
+                    Crear cuenta
+                  </button>
+                </>
               )}
             </nav>
+            {/* now navigation handles opening the register page */}
             <div className="vr mx-2" aria-hidden="true" style={{height: '28px'}}></div>
             <nav className="nav">
               <a className="nav-link text-primary px-3 fw-medium" href="#acercade">Acerca de</a>

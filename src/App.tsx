@@ -3,9 +3,10 @@ import { useState } from 'react'
 import NavBar from './components/NavBar'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import { getUser as getStoredUser, setUser as setStoredUser, clearUser as clearStoredUser, clearToken as clearStoredToken } from './services/storage'
 
-type Page = 'home' | 'login'
+type Page = 'home' | 'login' | 'register'
 
 function App() {
   const [page, setPage] = useState<Page>('home')
@@ -40,6 +41,7 @@ function App() {
       <NavBar onNavigate={handleNavigate} user={user} onLogout={handleLogout} />
       {page === 'home' && <Home />}
       {page === 'login' && <Login onBack={() => setPage('home')} onLogin={handleLogin} />}
+      {page === 'register' && <Register onBack={() => setPage('home')} onCreated={() => setPage('login')} />}
     </>
   )
 }
