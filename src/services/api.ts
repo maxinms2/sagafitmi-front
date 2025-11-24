@@ -1,12 +1,18 @@
+import { getToken } from './storage'
+
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080'
 
 export async function post<T>(path: string, body: unknown): Promise<T> {
   const url = `${API_BASE}${path}`
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers,
     body: JSON.stringify(body)
   })
 
@@ -15,7 +21,7 @@ export async function post<T>(path: string, body: unknown): Promise<T> {
 
   if (!res.ok) {
     const message = data?.message || res.statusText || 'Request failed'
-    throw new Error(message)
+    throw new Error(`${res.status} ${message}`)
   }
 
   return data as T
@@ -59,20 +65,26 @@ export interface UserResponse {
 async function get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
   const query = params
     ? Object.entries(params)
-        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        // Permitimos cadenas vacías ('') porque el backend puede requerirlas;
+        // sólo filtramos undefined y null.
+        .filter(([, v]) => v !== undefined && v !== null)
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
         .join('&')
     : ''
 
   const url = `${API_BASE}${path}${query ? `?${query}` : ''}`
-  const res = await fetch(url)
+  const token = getToken()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(url, { headers })
 
   const text = await res.text()
   const data = text ? JSON.parse(text) : null
 
   if (!res.ok) {
     const message = data?.message || res.statusText || 'Request failed'
-    throw new Error(message)
+    throw new Error(`${res.status} ${message}`)
   }
 
   return data as T
