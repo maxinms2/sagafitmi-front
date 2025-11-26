@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { searchProducts, API_BASE } from '../services/api'
+import { searchProducts, API_BASE, addToCartByUserEmail } from '../services/api'
 import type { Product } from '../services/api'
+import { getUser as getStoredUser } from '../services/storage'
 
 const PLACEHOLDER = 'https://via.placeholder.com/400x300?text=No+image'
 
@@ -58,6 +59,17 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [nameFilter, setNameFilter] = useState('')
   const [descriptionFilter, setDescriptionFilter] = useState('')
+  // Modal para ver imagen ampliada (incluye datos del producto)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalProduct, setModalProduct] = useState<{
+    src: string
+    alt: string
+    id?: number
+    name?: string
+    description?: string
+    price?: number
+  } | null>(null)
+  const [modalQuantity, setModalQuantity] = useState<number>(1)
 
   // extraemos la función de carga para poder invocarla desde el formulario de búsqueda
   useEffect(() => {
@@ -100,6 +112,34 @@ export default function Home() {
     setPage(pageNumber)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  // Abrir / cerrar modal
+  const openModal = (src: string, product?: Product) => {
+    setModalProduct({
+      id: product?.id,
+      src,
+      alt: product?.name ?? '',
+      name: product?.name,
+      description: product?.description,
+      price: product?.price,
+    })
+    setModalQuantity(1)
+    setModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setModalOpen(false)
+    setModalProduct(null)
+  }
+
+  // Cerrar con Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeModal()
+    }
+    if (modalOpen) window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [modalOpen])
 
   return (
     <div className="bg-light" style={{ minHeight: '100vh' }}>
@@ -235,7 +275,7 @@ export default function Home() {
                     <p className="card-text text-muted small mb-2" style={{ flex: 1 }}>{p.description}</p>
                     <div className="d-flex align-items-center justify-content-between mt-3">
                       <div className="fw-bold">${p.price?.toFixed(2)}</div>
-                      <button className="btn btn-sm btn-outline-primary">Ver</button>
+                      <button className="btn btn-sm btn-outline-primary" onClick={() => openModal(imageSrc, p)}>Ver</button>
                     </div>
                   </div>
                 </article>
@@ -275,6 +315,127 @@ export default function Home() {
         </nav>
 
         <div className="text-center text-muted small mt-2">{totalElements} productos</div>
+        {/* Modal de imagen ampliada */}
+        {modalOpen && modalProduct && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={closeModal}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050, padding: 16 }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'relative',
+                maxWidth: '95vw',
+                maxHeight: '90vh',
+                width: 'min(1100px,95%)',
+                background: '#fff',
+                borderRadius: 8,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <button
+                aria-label="Cerrar"
+                onClick={closeModal}
+                style={{ position: 'absolute', right: 8, top: 8, zIndex: 2, background: 'transparent', color: '#333', border: 'none', fontSize: 20, width: 36, height: 36 }}
+              >
+                ×
+              </button>
+
+              <div style={{ display: 'flex', gap: 0, alignItems: 'stretch' }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: 12 }}>
+                  <img
+                    src={modalProduct.src}
+                    alt={modalProduct.alt || modalProduct.name}
+                    style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block', background: '#fff' }}
+                    onError={(e: any) => {
+                      if (e.currentTarget.src !== PLACEHOLDER) e.currentTarget.src = PLACEHOLDER
+                    }}
+                  />
+                </div>
+                <aside style={{ width: 340, maxWidth: '40%', padding: 16, boxSizing: 'border-box', borderLeft: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <h3 className="h5 mb-0">{modalProduct.name}</h3>
+                  <div className="text-muted small" style={{ flex: 1 }}>{modalProduct.description}</div>
+                  <div className="fw-bold" style={{ fontSize: 18 }}>${modalProduct.price?.toFixed(2)}</div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <label className="small text-muted mb-0">Cantidad</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setModalQuantity((q) => Math.max(1, q - 1))}
+                        type="button"
+                        aria-label="Disminuir cantidad"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        value={modalQuantity}
+                        onChange={(e) => {
+                          const v = Number(e.target.value)
+                          setModalQuantity(Number.isNaN(v) || v < 1 ? 1 : Math.floor(v))
+                        }}
+                        style={{ width: 64, textAlign: 'center' }}
+                      />
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setModalQuantity((q) => q + 1)}
+                        type="button"
+                        aria-label="Aumentar cantidad"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={async () => {
+                        try {
+                          const stored = getStoredUser()
+                          if (!stored) {
+                            alert('Debes iniciar sesión para agregar productos al carrito')
+                            return
+                          }
+                          // stored is the user email (como guarda App.tsx)
+                          const productId = modalProduct?.id
+                          if (!productId) {
+                            alert('Producto inválido')
+                            return
+                          }
+                          await addToCartByUserEmail(stored, productId, modalQuantity)
+                          // La llamada anterior resolverá userId y retornará el item creado
+                          // Notify other components (NavBar) that cart changed
+                          try {
+                            window.dispatchEvent(new CustomEvent('cart-updated'))
+                          } catch (e) {
+                            // fallback no-op
+                          }
+                          alert('Producto añadido al carrito')
+                        } catch (err: any) {
+                          console.error('Error al añadir al carrito', err)
+                          alert(err?.message || 'Error al añadir al carrito')
+                        } finally {
+                          // Cerrar el modal independientemente del resultado
+                          closeModal()
+                        }
+                      }}
+                    >
+                      Agregar al carrito
+                    </button>
+                    <button className="btn btn-outline-secondary" onClick={closeModal}>Cerrar</button>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )
