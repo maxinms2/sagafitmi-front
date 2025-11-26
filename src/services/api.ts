@@ -1,6 +1,18 @@
 import { getToken } from './storage'
 
-export const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080'
+declare global {
+  interface Window {
+    __ENV__?: { VITE_API_BASE_URL?: string }
+  }
+}
+
+// Prefer runtime config injected into `window.__ENV__.VITE_API_BASE_URL` (set by Docker/nginx),
+// then fallback to build-time Vite env `import.meta.env.VITE_API_BASE_URL`,
+// finally fallback to a local default.
+export const API_BASE =
+  (typeof window !== 'undefined' && window.__ENV__?.VITE_API_BASE_URL) ||
+  (import.meta.env.VITE_API_BASE_URL as string) ||
+  'http://localhost:8080'
 
 export async function post<T>(path: string, body: unknown): Promise<T> {
   const url = `${API_BASE}${path}`

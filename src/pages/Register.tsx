@@ -1,4 +1,3 @@
-import React from 'react'
 import CreateUser from '../components/CreateUser'
 
 type Props = { onBack?: () => void; onCreated?: (email: string) => void }

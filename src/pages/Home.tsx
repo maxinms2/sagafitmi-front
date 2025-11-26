@@ -56,15 +56,23 @@ export default function Home() {
   const [totalElements, setTotalElements] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [nameFilter, setNameFilter] = useState('')
+  const [descriptionFilter, setDescriptionFilter] = useState('')
 
+  // extraemos la función de carga para poder invocarla desde el formulario de búsqueda
   useEffect(() => {
     let mounted = true
 
-        async function load() {
+    async function fetchProducts(params?: { page?: number; pagesize?: number; name?: string; description?: string }) {
       setLoading(true)
       setError(null)
       try {
-        const resp = await searchProducts({ page, pagesize: pageSize, name: '', description: '' })
+        const resp = await searchProducts({
+          page: params?.page ?? page,
+          pagesize: params?.pagesize ?? pageSize,
+          name: params?.name ?? nameFilter,
+          description: params?.description ?? descriptionFilter,
+        })
         if (!mounted) return
         setProducts(resp.content || [])
         setTotalPages(resp.totalPages ?? 0)
@@ -78,12 +86,13 @@ export default function Home() {
       }
     }
 
-    load()
+    // cargar en montado y cuando cambian página, tamaño de página, o filtros
+    fetchProducts()
 
     return () => {
       mounted = false
     }
-  }, [page, pageSize])
+  }, [page, pageSize, nameFilter, descriptionFilter])
 
   function goTo(pageNumber: number) {
     if (pageNumber < 0) pageNumber = 0
@@ -117,6 +126,49 @@ export default function Home() {
             </select>
           </div>
         </header>
+
+        {/* Búsqueda / filtros */}
+        <form
+          className="row g-2 align-items-center mb-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            // al enviar, pasamos página a 0 para ver resultados desde el inicio
+            setPage(0)
+          }}
+        >
+          <div className="col-auto">
+            <input
+              className="form-control form-control-sm"
+              placeholder="Buscar por nombre"
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+            />
+          </div>
+          <div className="col-auto">
+            <input
+              className="form-control form-control-sm"
+              placeholder="Buscar por descripción"
+              value={descriptionFilter}
+              onChange={(e) => setDescriptionFilter(e.target.value)}
+            />
+          </div>
+          <div className="col-auto">
+            <button className="btn btn-sm btn-primary" type="submit">Buscar</button>
+          </div>
+          <div className="col-auto">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setNameFilter('')
+                setDescriptionFilter('')
+                setPage(0)
+              }}
+            >
+              Limpiar
+            </button>
+          </div>
+        </form>
 
         {loading && (
           <div className="text-center py-5">
