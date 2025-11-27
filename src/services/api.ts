@@ -268,6 +268,15 @@ export function searchProducts(params: { description?: string; name?: string; pa
   return get<PaginatedResponse<Product>>('/api/products/search', params)
 }
 
+/**
+ * Crea un producto.
+ * Request: { name, description, price }
+ * Response: `Product` (puede incluir `id` y `mainImageUrl` según el backend)
+ */
+export function createProduct(body: { name: string; description: string; price: number }) {
+  return post<Product>('/api/products', body)
+}
+
 /** Actualiza un producto por id. Request: ProductDTO parcial/total. Response: ProductDTO o null si no existe o validación falla */
 export async function updateProduct(id: number, body: Partial<Product>) {
   const url = `${API_BASE}/api/products/${id}`
@@ -290,6 +299,32 @@ export async function updateProduct(id: number, body: Partial<Product>) {
   return data as Product | null
 }
 
+/** Elimina un producto por id. URL fija en puerto 8080. Response: 204 No Content */
+export async function deleteProduct(id: number): Promise<void> {
+  const url = `${API_BASE}/api/products/${id}`
+  const token = getToken()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(url, { method: 'DELETE', headers })
+
+  // 204 No Content -> éxito silencioso
+  if (res.status === 204) return
+
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try { data = JSON.parse(text) } catch (e) { data = text }
+  }
+
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+    throw new Error(`${res.status} ${message}`)
+  }
+
+  return
+}
+
 /**
  * Crea un usuario.
  * Request: { name, email, password }
@@ -297,4 +332,39 @@ export async function updateProduct(id: number, body: Partial<Product>) {
  */
 export function createUser(body: CreateUserRequest) {
   return post<UserResponse>('/api/users', body)
+}
+
+/**
+ * Sube una imagen para un producto.
+ * Endpoint: POST {API_BASE}/api/images/{productId}?mainImage=true
+ * Request: multipart/form-data con campo `file` (archivo)
+ * Response: 201 Created -> resuelve void, en caso de error lanza excepción con mensaje.
+ */
+export async function uploadProductImage(productId: number, file: File | Blob, mainImage = true): Promise<void> {
+  const url = `${API_BASE}/api/images/${productId}?mainImage=${mainImage}`
+  const token = getToken()
+
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const form = new FormData()
+  form.append('file', file)
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers, // IMPORTANT: do not set 'Content-Type', browser sets multipart boundary
+    body: form,
+  })
+
+  // 201 Created expected
+  if (res.status === 201) return
+
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try { data = JSON.parse(text) } catch (e) { data = text }
+  }
+
+  const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+  throw new Error(`${res.status} ${message}`)
 }
