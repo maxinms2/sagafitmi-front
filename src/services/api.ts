@@ -127,6 +127,10 @@ export function addToCart(body: CartItemCreateRequest) {
 export function getCartByUserId(userId: number) {
   return get<CartItemDTO[]>(`/api/cart/${userId}`)
 }
+/** Obtiene items del carrito que tienen desajuste de precio para un `userId` */
+export function getCartPriceMismatch(userId: number) {
+  return get<CartItemDTO[]>(`/api/cart/price-mismatch/${userId}`)
+}
 /** Elimina un item del carrito por su id (usa puerto 8082) */
 export async function deleteCartItem(itemId: number): Promise<void> {
   const url = `${API_BASE}/api/cart/${itemId}`
@@ -262,6 +266,28 @@ async function get<T>(path: string, params?: Record<string, unknown>): Promise<T
  */
 export function searchProducts(params: { description?: string; name?: string; page?: number; pagesize?: number }) {
   return get<PaginatedResponse<Product>>('/api/products/search', params)
+}
+
+/** Actualiza un producto por id. Request: ProductDTO parcial/total. Response: ProductDTO o null si no existe o validación falla */
+export async function updateProduct(id: number, body: Partial<Product>) {
+  const url = `${API_BASE}/api/products/${id}`
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) })
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try { data = JSON.parse(text) } catch (e) { data = text }
+  }
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+    throw new Error(`${res.status} ${message}`)
+  }
+  return data as Product | null
 }
 
 /**

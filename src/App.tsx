@@ -1,12 +1,14 @@
 import './App.css'
 import { useState } from 'react'
 import NavBar from './components/NavBar'
+import { isAdmin as tokenIsAdmin } from './services/jwt'
 import Home from './pages/Home'
+import AdminProducts from './pages/AdminProducts'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import { getUser as getStoredUser, setUser as setStoredUser, clearUser as clearStoredUser, clearToken as clearStoredToken } from './services/storage'
 
-type Page = 'home' | 'login' | 'register'
+type Page = 'home' | 'login' | 'register' | 'products'
 
 function App() {
   const [page, setPage] = useState<Page>('home')
@@ -36,10 +38,13 @@ function App() {
     setPage('home')
   }
 
+  const isAdmin = tokenIsAdmin()
+
   return (
     <>
-      <NavBar onNavigate={handleNavigate} user={user} onLogout={handleLogout} />
+      <NavBar onNavigate={handleNavigate} user={user} onLogout={handleLogout} isAdmin={isAdmin} />
       {page === 'home' && <Home />}
+      {page === 'products' && <AdminProducts onBack={() => setPage('home')} />}
       {page === 'login' && <Login onBack={() => setPage('home')} onLogin={handleLogin} />}
       {page === 'register' && <Register onBack={() => setPage('home')} onCreated={() => setPage('login')} />}
     </>

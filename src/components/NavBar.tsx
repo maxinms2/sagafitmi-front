@@ -1,15 +1,21 @@
-import { useEffect, useState } from 'react'
-import { getUserByEmail, getCartByUserId, deleteCartItem, updateCartItemQuantity, createOrderForUser } from '../services/api'
+import { useEffect, useState, useRef } from 'react'
+import { getUserByEmail, getCartByUserId, deleteCartItem, updateCartItemQuantity } from '../services/api'
 import type { CartItemDTO } from '../services/api'
 import type { OrderDTO } from '../services/api'
+import ConfirmOrderModal from './ConfirmOrderModal'
+import OrderResultModal from './OrderResultModal'
+import CartModal from './CartModal'
 
-type Props = {
-  onNavigate?: (page: 'home' | 'login' | 'register') => void
+type NavPage = 'home' | 'login' | 'register' | 'products'
+
+type PropsExtended = {
+  onNavigate?: (page: NavPage) => void
   user?: string | null
   onLogout?: () => void
+  isAdmin?: boolean
 }
 
-export default function NavBar({ onNavigate, user, onLogout }: Props) {
+export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExtended) {
   const [cartCount, setCartCount] = useState<number>(0)
   const [showCart, setShowCart] = useState(false)
   const [cartItems, setCartItems] = useState<CartItemDTO[]>([])
@@ -137,6 +143,25 @@ export default function NavBar({ onNavigate, user, onLogout }: Props) {
     }
     onNavigate?.('home')
   }
+  const [showAdminMenu, setShowAdminMenu] = useState(false)
+  const adminRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!adminRef.current) return
+      if (adminRef.current.contains(e.target as Node)) return
+      setShowAdminMenu(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowAdminMenu(false)
+    }
+    document.addEventListener('click', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [])
   
   return (
     <>
@@ -149,7 +174,30 @@ export default function NavBar({ onNavigate, user, onLogout }: Props) {
           </a>
 
           <div className="d-flex align-items-center position-relative">
-            <nav className="nav">
+            <nav className="nav d-flex align-items-center">
+              {/* Admin menu visible only for users with ADMIN role - placed left of user info */}
+              {isAdmin && (
+                <div className="nav-item dropdown me-2" ref={adminRef}>
+                  <button
+                    className="nav-link dropdown-toggle text-secondary px-3 btn btn-link"
+                    onClick={e => { e.preventDefault(); setShowAdminMenu(v => !v) }}
+                    aria-expanded={showAdminMenu}
+                    aria-haspopup="true"
+                    id="adminMenu"
+                    type="button"
+                  >
+                    Herramientas administrativas
+                  </button>
+                  <ul className={`dropdown-menu${showAdminMenu ? ' show' : ''}`} aria-labelledby="adminMenu" style={{minWidth: 160}}>
+                    <li>
+                      <a className="dropdown-item" href="#productos" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('products') }}>
+                        Productos
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              )}
+
               {user ? (
                 <>
                   <span className="nav-link text-secondary px-3">{user}</span>
@@ -232,216 +280,45 @@ export default function NavBar({ onNavigate, user, onLogout }: Props) {
       </div>
     </nav>
 
-      {/* Cart modal */}
-      {showCart && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center" style={{zIndex: 1050, paddingTop: '4rem'}}>
-          <div className="modal-backdrop fade show" style={{position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)'}} onClick={() => setShowCart(false)}></div>
-          <div className="card shadow" style={{width: 'min(720px, 95%)', zIndex: 1060, maxHeight: '70vh', display: 'flex', flexDirection: 'column'}} role="dialog" aria-modal="true">
-            <div className="card-header d-flex align-items-center justify-content-between">
-              <h5 className="mb-0">Tu carrito</h5>
-              <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowCart(false)}>Cerrar</button>
-            </div>
-            <div className="card-body" style={{overflowY: 'auto', flex: '1 1 auto', padding: '1rem'}}>
-              {cartLoading && <div>Cargando...</div>}
-              {cartError && <div className="text-danger">Error: {cartError}</div>}
-              {!cartLoading && cartItems.length === 0 && !cartError && <div>Tu carrito está vacío.</div>}
-              {!cartLoading && cartItems.length > 0 && (
-                <div>
-                  <ul className="list-group mb-3">
-                    {cartItems.map(it => (
-                      <li key={it.id} className="list-group-item d-flex justify-content-between align-items-center">
-                        <div style={{minWidth: '45%'}}>
-                          <div className="fw-semibold">{it.product.name}</div>
-                          <div className="d-flex align-items-center gap-2">
-                            <label className="text-muted small mb-0">Cantidad:</label>
-                            <div className="d-flex align-items-center">
-                              <input
-                                type="number"
-                                min={1}
-                                value={it.quantity}
-                                readOnly
-                                disabled={updatingIds.includes(it.id) || deletingIds.includes(it.id)}
-                                className="form-control form-control-sm mx-1"
-                                style={{width: '4.5rem', textAlign: 'center', WebkitAppearance: 'none', MozAppearance: 'textfield', appearance: 'textfield'}}
-                              />
-                              <div className="d-flex flex-column ms-1">
-                                <button
-                                  className="btn btn-sm btn-outline-secondary p-0 d-flex align-items-center justify-content-center"
-                                  style={{width: '28px', height: '18px', borderRadius: '2px'}}
-                                  type="button"
-                                  onClick={() => changeQtyBy(it.id, +1)}
-                                  disabled={updatingIds.includes(it.id) || deletingIds.includes(it.id)}
-                                  aria-label={`Aumentar cantidad de ${it.product.name}`}
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <path d="M1 6l5-4 5 4" />
-                                  </svg>
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-outline-secondary p-0 d-flex align-items-center justify-content-center mt-1"
-                                  style={{width: '28px', height: '18px', borderRadius: '2px'}}
-                                  type="button"
-                                  onClick={() => changeQtyBy(it.id, -1)}
-                                  disabled={updatingIds.includes(it.id) || deletingIds.includes(it.id)}
-                                  aria-label={`Disminuir cantidad de ${it.product.name}`}
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <path d="M1 2l5 4 5-4" />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                            {updatingIds.includes(it.id) && <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>}
-                          </div>
-                          {qtyErrors[it.id] && <div className="text-danger small mt-1">{qtyErrors[it.id]}</div>}
-                        </div>
-                        <div className="text-end d-flex align-items-center gap-2">
-                          <div className="me-2 text-end">
-                            <div>${(it.currentPrice || it.product.price).toFixed(2)}</div>
-                            <div className="text-muted small">Subtotal: ${( (it.currentPrice || it.product.price) * it.quantity ).toFixed(2)}</div>
-                          </div>
-                          <button
-                            className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center"
-                            onClick={() => handleDeleteItem(it.id)}
-                            disabled={deletingIds.includes(it.id)}
-                            aria-label={`Eliminar ${it.product.name}`}
-                            title="Eliminar"
-                          >
-                            {deletingIds.includes(it.id) ? (
-                              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                                <path d="M10 11v6"></path>
-                                <path d="M14 11v6"></path>
-                                <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path>
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                  {/* Total moved to footer to keep it always visible */}
-                </div>
-              )}
-            </div>
-            <div className="card-footer border-top d-flex justify-content-end align-items-center" style={{flex: '0 0 auto', padding: '0.75rem 1rem'}}>
-              <div className="me-auto">
-                <button className="btn btn-primary" onClick={() => setShowConfirmOrder(true)} disabled={cartItems.length === 0 || creatingOrder}>
-                  Generar orden de compra
-                </button>
-              </div>
-              <div className="fw-semibold text-primary fs-5">Total: ${cartItems.reduce((s, it) => s + ((it.currentPrice || it.product.price) * it.quantity), 0).toFixed(2)}</div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Confirm order modal */}
-      {showConfirmOrder && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{zIndex: 1070}}>
-          <div className="modal-backdrop fade show" style={{position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)'}} onClick={() => setShowConfirmOrder(false)}></div>
-          <div className="card shadow" style={{width: 'min(480px, 95%)', zIndex: 1080}} role="dialog" aria-modal="true">
-            <div className="card-header d-flex align-items-center justify-content-between">
-              <h5 className="mb-0">Confirmar orden</h5>
-              <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowConfirmOrder(false)}>Cerrar</button>
-            </div>
-            <div className="card-body">
-              <p>¿Deseas generar la orden por un total de <strong>${cartItems.reduce((s, it) => s + ((it.currentPrice || it.product.price) * it.quantity), 0).toFixed(2)}</strong>?</p>
-            </div>
-            <div className="card-footer d-flex justify-content-end gap-2">
-              <button className="btn btn-secondary" onClick={() => setShowConfirmOrder(false)} disabled={creatingOrder}>Cancelar</button>
-              <button className="btn btn-primary" onClick={async () => {
-                setCreatingOrder(true)
-                try {
-                  // resolve userId similar to loadCart
-                  const storedId = sessionStorage.getItem('sagafitmi_user_id')
-                  let userId: number | null = null
-                  if (storedId) {
-                    const parsed = parseInt(storedId, 10)
-                    if (!isNaN(parsed)) userId = parsed
-                  }
-                  if (userId == null && user) {
-                    const u = await getUserByEmail(user)
-                    userId = u.id
-                  }
-                  if (userId == null) throw new Error('No se pudo resolver el usuario')
+      <CartModal
+        visible={showCart}
+        onClose={() => setShowCart(false)}
+        items={cartItems}
+        loading={cartLoading}
+        error={cartError}
+        deletingIds={deletingIds}
+        updatingIds={updatingIds}
+        qtyErrors={qtyErrors}
+        onDeleteItem={handleDeleteItem}
+        onChangeQty={changeQtyBy}
+        onGenerateOrder={() => setShowConfirmOrder(true)}
+        creatingOrder={creatingOrder}
+        total={cartItems.reduce((s, it) => s + ((it.currentPrice || it.product.price) * it.quantity), 0)}
+      />
+      <ConfirmOrderModal
+        visible={showConfirmOrder}
+        onClose={() => setShowConfirmOrder(false)}
+        user={user}
+        total={cartItems.reduce((s, it) => s + ((it.currentPrice || it.product.price) * it.quantity), 0)}
+        onConfirmSuccess={(resp) => {
+          setOrderResult(resp)
+          setShowOrderResult(true)
+          setShowConfirmOrder(false)
+          // clear cart UI and close cart modal
+          setCartItems([])
+          setCartCount(0)
+          setShowCart(false)
+          window.dispatchEvent(new Event('cart-updated'))
+        }}
+        onError={(msg) => setCartError(msg)}
+        setCreatingOrder={(v: boolean) => setCreatingOrder(v)}
+      />
 
-                  const resp = await createOrderForUser(userId)
-                  setOrderResult(resp)
-                  setShowOrderResult(true)
-                  setShowConfirmOrder(false)
-                  // clear cart UI and close cart modal
-                  setCartItems([])
-                  setCartCount(0)
-                  setShowCart(false)
-                  window.dispatchEvent(new Event('cart-updated'))
-                } catch (e: any) {
-                  console.error('Error creating order', e)
-                  setCartError(e?.message || String(e))
-                } finally {
-                  setCreatingOrder(false)
-                }
-              }} disabled={creatingOrder}>
-                {creatingOrder ? 'Generando...' : 'Confirmar orden'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Order result modal */}
-      {showOrderResult && orderResult && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{zIndex: 1090}}>
-          <div className="modal-backdrop fade show" style={{position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)'}} onClick={() => { setShowOrderResult(false); setShowCart(false); }}></div>
-          <div className="card shadow" style={{width: 'min(720px, 95%)', zIndex: 1100}} role="dialog" aria-modal="true">
-            <div className="card-header d-flex align-items-center justify-content-between">
-              <h5 className="mb-0">Orden generada</h5>
-              <button className="btn btn-sm btn-outline-secondary" onClick={() => { setShowOrderResult(false); setShowCart(false); }}>Cerrar</button>
-            </div>
-            <div className="card-body">
-              {/* Folio: ODRS-YYMMDD-ID */}
-              {(() => {
-                try {
-                  const d = new Date(orderResult.createdAt)
-                  const yy = String(d.getFullYear()).slice(-2)
-                  const mm = String(d.getMonth() + 1).padStart(2, '0')
-                  const dd = String(d.getDate()).padStart(2, '0')
-                  const folio = `ODRS-${yy}${mm}${dd}-${orderResult.id}`
-                  return (
-                    <div className="mb-2"><strong>Folio:</strong> {folio}</div>
-                  )
-                } catch (e) {
-                  return null
-                }
-              })()}
-              <div className="mb-3">
-                <div><strong>Fecha de compra:</strong> {new Date(orderResult.createdAt).toLocaleString()}</div>
-                <div><strong>Total:</strong> ${orderResult.total.toFixed(2)}</div>
-              </div>
-              <div>
-                <h6>Artículos</h6>
-                <ul className="list-group">
-                  {orderResult.items.map((it, idx) => (
-                    <li key={idx} className="list-group-item">
-                      <div className="fw-semibold">{it.product.name}</div>
-                      <div className="text-muted small">{it.product.description}</div>
-                      <div className="d-flex justify-content-between mt-2">
-                        <div>Cantidad: {it.quantity}</div>
-                        <div>Precio: ${it.price.toFixed(2)} — Subtotal: ${(it.price * it.quantity).toFixed(2)}</div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="card-footer d-flex justify-content-end">
-              <button className="btn btn-primary" onClick={() => { setShowOrderResult(false); setShowCart(false); }}>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <OrderResultModal
+        visible={showOrderResult && !!orderResult}
+        order={orderResult}
+        onClose={() => { setShowOrderResult(false); setShowCart(false); }}
+      />
     </>
   )
 }
