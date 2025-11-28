@@ -5,8 +5,9 @@ import type { OrderDTO } from '../services/api'
 import ConfirmOrderModal from './ConfirmOrderModal'
 import OrderResultModal from './OrderResultModal'
 import CartModal from './CartModal'
+// Orders are now a full page (`AdminOrders`) navigated via `onNavigate`
 
-type NavPage = 'home' | 'login' | 'register' | 'products'
+type NavPage = 'home' | 'login' | 'register' | 'products' | 'orders'
 
 type PropsExtended = {
   onNavigate?: (page: NavPage) => void
@@ -177,24 +178,48 @@ export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExt
             <nav className="nav d-flex align-items-center">
               {/* Admin menu visible only for users with ADMIN role - placed left of user info */}
               {isAdmin && (
-                <div className="nav-item dropdown me-2" ref={adminRef}>
-                  <button
-                    className="nav-link dropdown-toggle text-secondary px-3 btn btn-link"
-                    onClick={e => { e.preventDefault(); setShowAdminMenu(v => !v) }}
-                    aria-expanded={showAdminMenu}
-                    aria-haspopup="true"
-                    id="adminMenu"
-                    type="button"
-                  >
-                    Herramientas administrativas
-                  </button>
-                  <ul className={`dropdown-menu${showAdminMenu ? ' show' : ''}`} aria-labelledby="adminMenu" style={{minWidth: 160}}>
-                    <li>
-                      <a className="dropdown-item" href="#productos" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('products') }}>
-                        Productos
+                <div className="nav-item me-2" ref={adminRef}>
+                  <div className="dropdown">
+                    <button
+                      className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
+                      onClick={e => { e.preventDefault(); setShowAdminMenu(v => !v) }}
+                      aria-expanded={showAdminMenu}
+                      aria-haspopup="true"
+                      id="adminMenu"
+                      type="button"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M9.5 1h-3l-.5 2.5H2l1.5 2-1 2.5L4 9l1.5 2.5L6 13h4l.5-1.5L12 9l2-1.5-1-2.5L14 3.5h-4l-.5-2.5z" fill="currentColor" opacity="0.12" />
+                        <path d="M8 3v2M8 11v2M3 8h2M11 8h2M4.6 4.6l1.4 1.4M10 10l1.4 1.4M4.6 11.4l1.4-1.4M10 6l1.4-1.4" stroke="currentColor" />
+                      </svg>
+                      <span className="small fw-medium">Herramientas administrativas</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                        <path d="M3.5 6l4 4 4-4"/>
+                      </svg>
+                    </button>
+
+                    <div className={`dropdown-menu shadow border-0 rounded-3 p-2${showAdminMenu ? ' show' : ''}`} aria-labelledby="adminMenu" style={{minWidth: 220}}>
+                      <a className="dropdown-item d-flex align-items-center gap-2" href="#productos" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('products') }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                          <path d="M2 2h12v4H2z" opacity="0.9" />
+                          <path d="M2 8h12v6H2z" opacity="0.6" />
+                        </svg>
+                        <div>
+                          <div className="fw-semibold">Productos</div>
+                          <div className="small text-muted">Gestionar catálogo</div>
+                        </div>
                       </a>
-                    </li>
-                  </ul>
+                      <a className="dropdown-item d-flex align-items-center gap-2" href="#ordenes" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('orders') }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                          <path d="M2 2h12v3H2z" opacity="0.9" />
+                          <path d="M2 7h12v7H2z" opacity="0.6" />
+                        </svg>
+                        <div>
+                          <div className="fw-semibold">Órdenes</div>
+                        </div>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -295,6 +320,7 @@ export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExt
         creatingOrder={creatingOrder}
         total={cartItems.reduce((s, it) => s + ((it.currentPrice || it.product.price) * it.quantity), 0)}
       />
+      {/* Orders handled as a full page (AdminOrders) via navigation */}
       <ConfirmOrderModal
         visible={showConfirmOrder}
         onClose={() => setShowConfirmOrder(false)}

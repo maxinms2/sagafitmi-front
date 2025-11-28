@@ -223,7 +223,7 @@ export default function AdminProducts({ onBack }: Props) {
 
         {!loading && !fetchError && (
           <div className="table-responsive">
-            <table className="table table-sm table-hover align-middle">
+            <table className="table table-sm table-hover table-striped align-middle">
               <thead>
                 <tr>
                   <th style={{width: '6%'}}>ID</th>

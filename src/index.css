@@ -67,3 +67,22 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Tables: make hover different from zebra striping so it's clearly visible */
+.table.table-hover tbody tr:hover {
+  /* stronger, bluish hover for good contrast over striped rows */
+  background-color: rgba(13, 110, 253, 0.16) !important;
+}
+
+/* Light theme: slightly stronger blue so hover is very visible */
+@media (prefers-color-scheme: light) {
+  .table.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.18) !important;
+  }
+}
+
+/* Ensure striped + hover combination remains readable: overlay a stronger tint */
+.table.table-striped.table-hover tbody tr:nth-of-type(odd):hover,
+.table.table-striped.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.18) !important;
+}

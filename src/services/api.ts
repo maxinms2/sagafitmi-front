@@ -117,6 +117,10 @@ export function getUserByEmail(email: string) {
   return get<UserResponse>('/api/users/by-email', { email })
 }
 
+/** Busca un usuario por id */
+export function getUserById(userId: number) {
+  return get<UserResponse>(`/api/users/${userId}`)
+}
 
 /** Añade un item al carrito especificando userId */
 export function addToCart(body: CartItemCreateRequest) {
@@ -217,6 +221,39 @@ export async function createOrderForUser(userId: number): Promise<OrderDTO> {
 
   return data as OrderDTO
 }
+/** Obtiene una orden por su id. Response: OrderDTO */
+export function getOrderById(orderId: number) {
+  return get<OrderDTO>(`/api/orders/${orderId}`)
+}
+
+/** Actualiza el estado de una orden. URL: PUT /api/orders/{orderId}/status/{status} */
+export async function updateOrderStatus(orderId: number, status: string): Promise<OrderDTO> {
+  const url = `${API_BASE}/api/orders/${orderId}/status/${encodeURIComponent(status)}`
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(url, { method: 'PUT', headers })
+
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try {
+      data = JSON.parse(text)
+    } catch (e) {
+      data = text
+    }
+  }
+
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+    throw new Error(`${res.status} ${message}`)
+  }
+
+  return data as OrderDTO
+}
 /** Añade al carrito resolviendo userId a partir del email almacenado */
 export async function addToCartByUserEmail(email: string, productId: number, quantity: number) {
   const user = await getUserByEmail(email)
@@ -266,6 +303,42 @@ async function get<T>(path: string, params?: Record<string, unknown>): Promise<T
  */
 export function searchProducts(params: { description?: string; name?: string; page?: number; pagesize?: number }) {
   return get<PaginatedResponse<Product>>('/api/products/search', params)
+}
+
+/**
+ * Formatea una `Date` o cadena en `yyyy-MM-dd` para el backend.
+ */
+function formatDateParam(d?: string | Date) {
+  if (!d) return undefined
+  if (typeof d === 'string') return d
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Obtiene órdenes paginadas. Parámetros:
+ * - `startDate`/`endDate`: string (yyyy-MM-dd) o `Date`
+ * - `status`: filtro por estado (ej. "NEW")
+ * - `page` y `size`: paginación
+ * Response: `PaginatedResponse<OrderDTO>`
+ */
+export function getOrders(params: {
+  startDate?: string | Date
+  endDate?: string | Date
+  status?: string
+  page?: number
+  size?: number
+}) {
+  const q: Record<string, unknown> = {}
+  if (params.startDate) q.startDate = formatDateParam(params.startDate)
+  if (params.endDate) q.endDate = formatDateParam(params.endDate)
+  if (params.status) q.status = params.status
+  if (typeof params.page === 'number') q.page = params.page
+  if (typeof params.size === 'number') q.size = params.size
+
+  return get<PaginatedResponse<OrderDTO>>('/api/orders', q)
 }
 
 /**
