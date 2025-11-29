@@ -7,7 +7,7 @@ import OrderResultModal from './OrderResultModal'
 import CartModal from './CartModal'
 // Orders are now a full page (`AdminOrders`) navigated via `onNavigate`
 
-type NavPage = 'home' | 'login' | 'register' | 'products' | 'orders'
+type NavPage = 'home' | 'login' | 'register' | 'products' | 'orders' | 'metrics'
 
 type PropsExtended = {
   onNavigate?: (page: NavPage) => void
@@ -218,6 +218,19 @@ export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExt
                           <div className="fw-semibold">Órdenes</div>
                         </div>
                       </a>
+                      <div className="dropdown-divider my-1" />
+                      <div className="px-2 py-1">
+                        <div className="small text-muted mb-1">Métricas</div>
+                        <a className="dropdown-item d-flex align-items-center gap-2 ps-4" href="#ventas" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('metrics') }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                            <path d="M2 13h2V7H2v6zm4 0h2V3H6v10zm4 0h2v-4h-2v4z" />
+                          </svg>
+                          <div>
+                            <div className="fw-semibold">Ventas</div>
+                            <div className="small text-muted">Resumen de ventas</div>
+                          </div>
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>

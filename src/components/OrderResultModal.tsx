@@ -12,8 +12,8 @@ export default function OrderResultModal({ visible, order, onClose }: Props) {
   if (!visible || !order) return null
 
   const [mismatchItems, setMismatchItems] = useState<CartItemDTO[]>([])
-  const [mismatchLoading, setMismatchLoading] = useState(false)
-  const [mismatchError, setMismatchError] = useState<string | null>(null)
+  const [, setMismatchLoading] = useState(false)
+  const [, setMismatchError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!order) return

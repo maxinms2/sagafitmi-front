@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { getUserByEmail, createOrderForUser, getCartPriceMismatch } from '../services/api'
 import type { OrderDTO, CartItemDTO } from '../services/api'
 

@@ -38,12 +38,7 @@ type Props = {
   onOrderUpdated?: (order: OrderDTO) => void
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  NEW: 'NUEVA',
-  PROCESSING: 'EN PROCESO',
-  COMPLETED: 'COMPLETADA',
-  CANCELLED: 'CANCELADA',
-}
+// NOTE: status labels for the admin list live in `AdminOrders`.
 
 export default function OrderDetailModal({ orderId, show, onClose, onOrderUpdated }: Props) {
   const [order, setOrder] = useState<OrderDTO | null>(null)
@@ -51,7 +46,7 @@ export default function OrderDetailModal({ orderId, show, onClose, onOrderUpdate
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<UserResponse | null>(null)
   const [userLoading, setUserLoading] = useState(false)
-  const [userError, setUserError] = useState<string | null>(null)
+  const [, setUserError] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true

@@ -25,7 +25,7 @@ export default function AdminOrders({ onBack }: Props) {
   const [startDate, setStartDate] = useState<string>(todayYMD())
   const [endDate, setEndDate] = useState<string>(todayYMD())
   const [statusFilter, setStatusFilter] = useState<string>('')
-  const [reloadKey, setReloadKey] = useState(0)
+  const [reloadKey] = useState(0)
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 

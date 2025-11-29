@@ -112,6 +112,31 @@ export interface OrderDTO {
   items: OrderItem[]
 }
 
+/** Request para métricas de órdenes */
+export interface MetricsOrdersRequest {
+  startDate: string // yyyy-MM-dd
+  endDate: string // yyyy-MM-dd
+  productIds?: number[]
+  productDescriptions?: string[]
+  statuses?: string[]
+  userIds?: number[]
+}
+
+export interface MetricsOrderItem {
+  orderId: number
+  orderStatus: string
+  productName: string
+  productDescription: string
+  price: number
+  quantity: number
+  subtotal: number
+}
+
+export interface MetricsOrdersResponse {
+  items: MetricsOrderItem[]
+  grandTotal: number
+}
+
 /** Busca un usuario por email */
 export function getUserByEmail(email: string) {
   return get<UserResponse>('/api/users/by-email', { email })
@@ -120,6 +145,17 @@ export function getUserByEmail(email: string) {
 /** Busca un usuario por id */
 export function getUserById(userId: number) {
   return get<UserResponse>(`/api/users/${userId}`)
+}
+
+/** Obtiene todos los usuarios. Response: UserResponse[]
+ * Ejemplo de respuesta:
+ * [
+ *  { "id": 4, "name": "Edgar", "email": "maxinms2@gmail.com", "role": "ADMIN" },
+ *  { "id": 5, "name": "cocoi", "email": "cocoi@gmail.com", "role": "USER" }
+ * ]
+ */
+export function getUsers() {
+  return get<UserResponse[]>('/api/users')
 }
 
 /** Añade un item al carrito especificando userId */
@@ -305,6 +341,22 @@ export function searchProducts(params: { description?: string; name?: string; pa
   return get<PaginatedResponse<Product>>('/api/products/search', params)
 }
 
+/** Obtiene productos (opcionalmente paginados). URL: GET /api/products
+ *  Params opcionales: `page`, `size` */
+export function getProducts(params?: { page?: number; size?: number }) {
+  const q: Record<string, unknown> = {}
+  if (params) {
+    if (typeof params.page === 'number') q.page = params.page
+    if (typeof params.size === 'number') q.size = params.size
+  }
+  return get<PaginatedResponse<Product>>('/api/products', q)
+}
+
+/** Obtiene todos los productos (no paginado) -> GET /api/products */
+export function getAllProducts() {
+  return get<Product[]>('/api/products')
+}
+
 /**
  * Formatea una `Date` o cadena en `yyyy-MM-dd` para el backend.
  */
@@ -396,6 +448,11 @@ export async function deleteProduct(id: number): Promise<void> {
   }
 
   return
+}
+
+/** POST /api/metrics/orders -> obtiene detalle de ventas por filtros */
+export function postMetricsOrders(body: MetricsOrdersRequest) {
+  return post<MetricsOrdersResponse>('/api/metrics/orders', body)
 }
 
 /**
