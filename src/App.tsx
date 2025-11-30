@@ -4,13 +4,15 @@ import NavBar from './components/NavBar'
 import { isAdmin as tokenIsAdmin } from './services/jwt'
 import Home from './pages/Home'
 import AdminProducts from './pages/AdminProducts'
+import AdminUsers from './pages/AdminUsers'
 import AdminOrders from './pages/AdminOrders'
 import SalesMetrics from './pages/SalesMetrics'
+import ProductsMetrics from './pages/ProductsMetrics'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import { getUser as getStoredUser, setUser as setStoredUser, clearUser as clearStoredUser, clearToken as clearStoredToken } from './services/storage'
 
-type Page = 'home' | 'login' | 'register' | 'products' | 'orders' | 'metrics'
+type Page = 'home' | 'login' | 'register' | 'products' | 'orders' | 'metrics' | 'metricsProducts' | 'users'
 
 function App() {
   const [page, setPage] = useState<Page>('home')
@@ -47,8 +49,10 @@ function App() {
       <NavBar onNavigate={handleNavigate} user={user} onLogout={handleLogout} isAdmin={isAdmin} />
       {page === 'home' && <Home />}
       {page === 'products' && <AdminProducts onBack={() => setPage('home')} />}
+      {page === 'users' && <AdminUsers onBack={() => setPage('home')} />}
       {page === 'orders' && <AdminOrders onBack={() => setPage('home')} />}
           {page === 'metrics' && <SalesMetrics onBack={() => setPage('home')} />}
+          {page === 'metricsProducts' && <ProductsMetrics onBack={() => setPage('home')} />}
       {page === 'login' && <Login onBack={() => setPage('home')} onLogin={handleLogin} />}
       {page === 'register' && <Register onBack={() => setPage('home')} onCreated={() => setPage('login')} />}
     </>

@@ -100,16 +100,22 @@ export default function AdminOrders({ onBack }: Props) {
         {/* Validación: la fecha final nunca puede ser menor que la inicial */}
         <form className="row g-2 align-items-center mb-3" onSubmit={e => { e.preventDefault(); if (endDate < startDate) { return } setPage(0) }}>
           <div className="col-auto">
-            <input type="date" className="form-control form-control-sm" placeholder="Fecha inicio" value={startDate} onChange={e => {
-              const v = e.target.value
-              setStartDate(v)
-            }} />
+            <div>
+              <label className="form-label small">Fecha inicial</label>
+              <input type="date" className="form-control form-control-sm" placeholder="Fecha inicio" value={startDate} onChange={e => {
+                const v = e.target.value
+                setStartDate(v)
+              }} />
+            </div>
           </div>
           <div className="col-auto">
-            <input type="date" className="form-control form-control-sm" placeholder="Fecha fin" value={endDate} onChange={e => {
-              const v = e.target.value
-              setEndDate(v)
-            }} />
+            <div>
+              <label className="form-label small">Fecha final</label>
+              <input type="date" className="form-control form-control-sm" placeholder="Fecha fin" value={endDate} onChange={e => {
+                const v = e.target.value
+                setEndDate(v)
+              }} />
+            </div>
           </div>
           <div className="col-auto">
             <select className="form-select form-select-sm" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>

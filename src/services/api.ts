@@ -73,7 +73,10 @@ export interface CreateUserRequest {
   name: string
   email: string
   password: string
+  // Opcional: si se envía, el backend deberá aceptar el rol ('USER' | 'ADMIN')
+  role?: 'USER' | 'ADMIN'
 }
+
 
 export interface UserResponse {
   id: number
@@ -135,6 +138,22 @@ export interface MetricsOrderItem {
 export interface MetricsOrdersResponse {
   items: MetricsOrderItem[]
   grandTotal: number
+}
+
+/** Request para métricas de productos */
+export interface MetricsProductsRequest {
+  startDate?: string | Date // yyyy-MM-dd or Date
+  endDate?: string | Date // yyyy-MM-dd or Date
+  sortBy?: 'quantity' | 'amount' | string
+  top?: number // número máximo de productos a retornar (opcional)
+}
+
+export interface MetricsProductItem {
+  productId: number
+  name: string
+  description: string
+  quantitySold: number
+  amountSold: number
 }
 
 /** Busca un usuario por email */
@@ -393,6 +412,19 @@ export function getOrders(params: {
   return get<PaginatedResponse<OrderDTO>>('/api/orders', q)
 }
 
+/** POST /api/metrics/products -> obtiene métricas de productos
+ * Request: MetricsProductsRequest (agrega `top?: number` opcional — cantidad máxima de productos a regresar)
+ * Response: MetricsProductItem[] or { items: MetricsProductItem[] }
+ */
+export function postMetricsProducts(body: MetricsProductsRequest) {
+  // aseguramos que las fechas se envíen como yyyy-MM-dd
+  const payload: any = { ...body }
+  if (body.startDate) payload.startDate = formatDateParam(body.startDate)
+  if (body.endDate) payload.endDate = formatDateParam(body.endDate)
+  // `top` (si está presente) se envía tal cual gracias al spread; el backend debe interpretarlo.
+  return post<MetricsProductItem[]>('/api/metrics/products', payload)
+}
+
 /**
  * Crea un producto.
  * Request: { name, description, price }
@@ -462,6 +494,57 @@ export function postMetricsOrders(body: MetricsOrdersRequest) {
  */
 export function createUser(body: CreateUserRequest) {
   return post<UserResponse>('/api/users', body)
+}
+
+/** Actualiza un usuario por id. Request: { name?, role? }. Response: UserResponse o null si no existe */
+export async function updateUser(userId: number, body: Partial<{ name: string; role: 'USER' | 'ADMIN' }>) {
+  const url = `${API_BASE}/api/users/${userId}`
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) })
+
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try { data = JSON.parse(text) } catch (e) { data = text }
+  }
+
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+    throw new Error(`${res.status} ${message}`)
+  }
+
+  return data as UserResponse | null
+}
+
+/** Elimina un usuario por id. Response: 204 No Content -> éxito silencioso */
+export async function deleteUser(userId: number): Promise<void> {
+  const url = `${API_BASE}/api/users/${userId}`
+  const token = getToken()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(url, { method: 'DELETE', headers })
+
+  // 204 No Content -> éxito silencioso
+  if (res.status === 204) return
+
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try { data = JSON.parse(text) } catch (e) { data = text }
+  }
+
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+    throw new Error(`${res.status} ${message}`)
+  }
+
+  return
 }
 
 /**

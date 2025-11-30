@@ -7,7 +7,7 @@ import OrderResultModal from './OrderResultModal'
 import CartModal from './CartModal'
 // Orders are now a full page (`AdminOrders`) navigated via `onNavigate`
 
-type NavPage = 'home' | 'login' | 'register' | 'products' | 'orders' | 'metrics'
+type NavPage = 'home' | 'login' | 'register' | 'products' | 'orders' | 'metrics' | 'users'
 
 type PropsExtended = {
   onNavigate?: (page: NavPage) => void
@@ -218,6 +218,16 @@ export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExt
                           <div className="fw-semibold">Órdenes</div>
                         </div>
                       </a>
+                      <a className="dropdown-item d-flex align-items-center gap-2" href="#usuarios" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('users') }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                          <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                          <path d="M2 14s1-1 6-1 6 1 6 1-1-4-6-4-6 4-6 4z" opacity="0.9" />
+                        </svg>
+                        <div>
+                          <div className="fw-semibold">Usuarios</div>
+                          <div className="small text-muted">Gestionar usuarios</div>
+                        </div>
+                      </a>
                       <div className="dropdown-divider my-1" />
                       <div className="px-2 py-1">
                         <div className="small text-muted mb-1">Métricas</div>
@@ -228,6 +238,16 @@ export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExt
                           <div>
                             <div className="fw-semibold">Ventas</div>
                             <div className="small text-muted">Resumen de ventas</div>
+                          </div>
+                        </a>
+                        <a className="dropdown-item d-flex align-items-center gap-2 ps-4" href="#productos-metricas" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('metricsProducts') }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                            <path d="M3 2h10v4H3z" opacity="0.9" />
+                            <path d="M3 8h10v6H3z" opacity="0.6" />
+                          </svg>
+                          <div>
+                            <div className="fw-semibold">Productos</div>
+                            <div className="small text-muted">Ventas por producto</div>
                           </div>
                         </a>
                       </div>

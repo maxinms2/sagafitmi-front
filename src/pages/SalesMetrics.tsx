@@ -99,6 +99,12 @@ export default function SalesMetrics({ onBack }: Props) {
         setFilteredDescriptions(uniq)
         // usuarios
         setUsers(usersResp || [])
+        // después de cargar productos y usuarios, ejecutar búsqueda inicial con parámetros por defecto
+        // (ejecutar solo si la página sigue montada)
+        if (mounted) {
+          // doSearch es una función declarada más abajo; la llamamos para realizar la búsqueda inicial
+          await doSearch()
+        }
       } catch (err: any) {
         if (!mounted) return
         setProductsError(err?.message || 'Error cargando productos')
@@ -183,10 +189,16 @@ export default function SalesMetrics({ onBack }: Props) {
 
         <form className="row g-2 align-items-center mb-3" onSubmit={doSearch}>
           <div className="col-auto">
-            <input type="date" className="form-control form-control-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <div>
+              <label className="form-label small">Fecha inicial</label>
+              <input type="date" className="form-control form-control-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            </div>
           </div>
           <div className="col-auto">
-            <input type="date" className="form-control form-control-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            <div>
+              <label className="form-label small">Fecha final</label>
+              <input type="date" className="form-control form-control-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            </div>
           </div>
           <div className="col-auto">
             <div className="dropdown" ref={statusRef}>
