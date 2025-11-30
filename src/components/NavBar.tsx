@@ -7,7 +7,7 @@ import OrderResultModal from './OrderResultModal'
 import CartModal from './CartModal'
 // Orders are now a full page (`AdminOrders`) navigated via `onNavigate`
 
-type NavPage = 'home' | 'login' | 'register' | 'products' | 'orders' | 'metrics' | 'users'
+type NavPage = 'home' | 'login' | 'register' | 'products' | 'orders' | 'metrics' | 'metricsProducts' | 'users'
 
 type PropsExtended = {
   onNavigate?: (page: NavPage) => void

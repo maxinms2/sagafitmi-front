@@ -29,7 +29,7 @@ export default function ProductsMetrics({ onBack }: Props) {
   const [top, setTop] = useState<number | undefined>(10)
 
   async function doSearch(e?: React.FormEvent) {
-    if (e && typeof (e as Event).preventDefault === 'function') (e as Event).preventDefault()
+    e?.preventDefault()
     // debug
     // eslint-disable-next-line no-console
     console.log('[ProductsMetrics] doSearch called', { startDate, endDate, sortBy, top })
