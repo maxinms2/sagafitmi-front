@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { getUsers, createUser, updateUser, deleteUser } from '../services/api'
+import { notifyError, notifyWarning, notifySuccess } from '../utils/notify'
 import type { UserResponse } from '../services/api'
 
 type Props = { onBack?: () => void }
@@ -23,6 +24,12 @@ export default function AdminUsers({ onBack }: Props) {
 
   const isMounted = useRef(true)
 
+  function extractError(err: any) {
+    const raw = err?.message || String(err || '')
+    const parsed = raw.replace(/^\d+\s*/, '')
+    return { raw, parsed }
+  }
+
   async function fetchUsers() {
     setLoading(true)
     setError(null)
@@ -32,7 +39,8 @@ export default function AdminUsers({ onBack }: Props) {
       setUsers(resp || [])
     } catch (e: any) {
       if (!isMounted.current) return
-      setError(e?.message || 'Error al obtener usuarios')
+      const { raw, parsed } = extractError(e)
+      setError(parsed || raw)
       setUsers([])
     } finally {
       if (isMounted.current) setLoading(false)
@@ -151,14 +159,15 @@ export default function AdminUsers({ onBack }: Props) {
                               if (editValues.role !== undefined) payload.role = editValues.role
                               const updated = await updateUser(u.id, payload)
                               if (updated == null) {
-                                window.alert('No se pudo actualizar: usuario no existe o error')
+                                notifyWarning('No se pudo actualizar: usuario no existe o error')
                               } else {
                                 setUsers(prev => prev.map(x => x.id === u.id ? { ...x, name: updated.name, role: updated.role } : x))
                                 setEditingId(null)
                                 setEditValues({})
                               }
                             } catch (err: any) {
-                              window.alert(err?.message || 'Error actualizando usuario')
+                              const { raw, parsed } = extractError(err)
+                              notifyError(parsed || raw)
                             } finally {
                               setSaving(false)
                             }
@@ -232,11 +241,11 @@ export default function AdminUsers({ onBack }: Props) {
                   <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowCreateDialog(false)} disabled={creating}>Cancelar</button>
                   <button className="btn btn-sm btn-primary" onClick={async () => {
                     // Validaciones simples
-                    if (!newUser.name || newUser.name.trim() === '') { window.alert('El nombre es requerido'); return }
-                    if (!newUser.email || newUser.email.trim() === '') { window.alert('El email es requerido'); return }
-                    if (!isValidEmail(newUser.email.trim())) { window.alert('El email no tiene un formato válido'); return }
-                    if (!newUser.password || newUser.password.length < 4) { window.alert('La contraseña debe tener al menos 4 caracteres'); return }
-                    if (newUser.password !== newUser.confirmPassword) { window.alert('Las contraseñas no coinciden'); return }
+                    if (!newUser.name || newUser.name.trim() === '') { notifyWarning('El nombre es requerido'); return }
+                    if (!newUser.email || newUser.email.trim() === '') { notifyWarning('El email es requerido'); return }
+                    if (!isValidEmail(newUser.email.trim())) { notifyWarning('El email no tiene un formato válido'); return }
+                    if (!newUser.password || newUser.password.length < 4) { notifyWarning('La contraseña debe tener al menos 4 caracteres'); return }
+                    if (newUser.password !== newUser.confirmPassword) { notifyWarning('Las contraseñas no coinciden'); return }
                     setCreating(true)
                     try {
                       const created = await createUser({ name: newUser.name.trim(), email: newUser.email.trim(), password: newUser.password, role: newUser.role })
@@ -244,8 +253,10 @@ export default function AdminUsers({ onBack }: Props) {
                       setUsers(prev => [created, ...prev])
                       setShowCreateDialog(false)
                       setNewUser({ name: '', email: '', password: '', confirmPassword: '', role: 'USER' })
+                      notifySuccess('Usuario creado correctamente')
                     } catch (err: any) {
-                      window.alert(err?.message || 'Error creando usuario')
+                      const { raw, parsed } = extractError(err)
+                      notifyError(parsed || raw)
                     } finally {
                       setCreating(false)
                     }
@@ -280,11 +291,11 @@ export default function AdminUsers({ onBack }: Props) {
                       setShowDeleteDialog(false)
                       setUserToDelete(null)
                     } catch (err: any) {
-                      const msg = err?.message || ''
-                      if (msg.includes('403') && msg.includes('Request failed')) {
-                        window.alert('Error al eliminar, existen órdenes o items de carrito relacionadas')
+                      const { raw, parsed } = extractError(err)
+                      if (raw.includes('403') && raw.includes('Request failed')) {
+                        notifyWarning('Error al eliminar, existen órdenes o items de carrito relacionadas')
                       } else {
-                        window.alert(msg || 'Error eliminando usuario')
+                        notifyError(parsed || raw)
                       }
                     } finally {
                       setDeleting(false)

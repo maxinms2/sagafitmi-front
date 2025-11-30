@@ -169,7 +169,13 @@ export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExt
     <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
       <div className="container-fluid px-3 px-md-4">
         <div className="d-flex w-100 align-items-center justify-content-between">
-          <a className="navbar-brand d-flex align-items-center gap-3 mb-0" href="#">
+          <a
+            className="navbar-brand d-flex align-items-center gap-3 mb-0"
+            href="#"
+            onClick={e => { e.preventDefault(); onNavigate?.('home') }}
+            role="button"
+            aria-label="Ir a la página principal"
+          >
             <div className="rounded-circle d-flex align-items-center justify-content-center" style={{width:44,height:44, background: 'linear-gradient(90deg,#06b6d4,#10b981)', color: 'white', fontWeight:700}}>SF</div>
             <span className="fw-semibold fs-5 mb-0">Sagafitmi</span>
           </a>
@@ -181,70 +187,93 @@ export default function NavBar({ onNavigate, user, onLogout, isAdmin }: PropsExt
                 <div className="nav-item me-2" ref={adminRef}>
                   <div className="dropdown">
                     <button
-                      className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
+                      className="btn btn-sm btn-outline-primary d-flex align-items-center gap-2 px-2"
                       onClick={e => { e.preventDefault(); setShowAdminMenu(v => !v) }}
                       aria-expanded={showAdminMenu}
                       aria-haspopup="true"
                       id="adminMenu"
                       type="button"
+                      title="Herramientas administrativas"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <path d="M9.5 1h-3l-.5 2.5H2l1.5 2-1 2.5L4 9l1.5 2.5L6 13h4l.5-1.5L12 9l2-1.5-1-2.5L14 3.5h-4l-.5-2.5z" fill="currentColor" opacity="0.12" />
                         <path d="M8 3v2M8 11v2M3 8h2M11 8h2M4.6 4.6l1.4 1.4M10 10l1.4 1.4M4.6 11.4l1.4-1.4M10 6l1.4-1.4" stroke="currentColor" />
                       </svg>
-                      <span className="small fw-medium">Herramientas administrativas</span>
+                      <span className="small fw-medium">Herramientas</span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
                         <path d="M3.5 6l4 4 4-4"/>
                       </svg>
                     </button>
 
-                    <div className={`dropdown-menu shadow border-0 rounded-3 p-2${showAdminMenu ? ' show' : ''}`} aria-labelledby="adminMenu" style={{minWidth: 220}}>
-                      <a className="dropdown-item d-flex align-items-center gap-2" href="#productos" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('products') }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                          <path d="M2 2h12v4H2z" opacity="0.9" />
-                          <path d="M2 8h12v6H2z" opacity="0.6" />
-                        </svg>
-                        <div>
-                          <div className="fw-semibold">Productos</div>
-                          <div className="small text-muted">Gestionar catálogo</div>
+                    <div className={`dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-3${showAdminMenu ? ' show' : ''}`} aria-labelledby="adminMenu" style={{minWidth: 320}}>
+                      <div className="mb-2">
+                        <div className="fw-semibold">Herramientas administrativas</div>
+                      </div>
+                      <div className="row gx-2 gy-2 mb-2">
+                        <div className="col-12">
+                          <a className="d-flex align-items-start text-decoration-none text-body rounded-3 p-2 hover-shadow" href="#productos" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('products') }}>
+                            <div className="me-3 d-flex align-items-center justify-content-center bg-light rounded-3" style={{width:44,height:44}}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                                <path d="M2 2h12v4H2z" opacity="0.9" />
+                                <path d="M2 8h12v6H2z" opacity="0.6" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="fw-semibold">Productos</div>
+                              <div className="small text-muted">Gestionar catálogo</div>
+                            </div>
+                          </a>
                         </div>
-                      </a>
-                      <a className="dropdown-item d-flex align-items-center gap-2" href="#ordenes" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('orders') }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                          <path d="M2 2h12v3H2z" opacity="0.9" />
-                          <path d="M2 7h12v7H2z" opacity="0.6" />
-                        </svg>
-                        <div>
-                          <div className="fw-semibold">Órdenes</div>
+                        <div className="col-12">
+                          <a className="d-flex align-items-start text-decoration-none text-body rounded-3 p-2" href="#ordenes" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('orders') }}>
+                            <div className="me-3 d-flex align-items-center justify-content-center bg-light rounded-3" style={{width:44,height:44}}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                                <path d="M2 2h12v3H2z" opacity="0.9" />
+                                <path d="M2 7h12v7H2z" opacity="0.6" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="fw-semibold">Órdenes</div>
+                              <div className="small text-muted">Ver y gestionar pedidos</div>
+                            </div>
+                          </a>
                         </div>
-                      </a>
-                      <a className="dropdown-item d-flex align-items-center gap-2" href="#usuarios" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('users') }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                          <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
-                          <path d="M2 14s1-1 6-1 6 1 6 1-1-4-6-4-6 4-6 4z" opacity="0.9" />
-                        </svg>
-                        <div>
-                          <div className="fw-semibold">Usuarios</div>
-                          <div className="small text-muted">Gestionar usuarios</div>
+                        <div className="col-12">
+                          <a className="d-flex align-items-start text-decoration-none text-body rounded-3 p-2" href="#usuarios" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('users') }}>
+                            <div className="me-3 d-flex align-items-center justify-content-center bg-light rounded-3" style={{width:44,height:44}}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                                <path d="M2 14s1-1 6-1 6 1 6 1-1-4-6-4-6 4-6 4z" opacity="0.9" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="fw-semibold">Usuarios</div>
+                              <div className="small text-muted">Gestionar usuarios</div>
+                            </div>
+                          </a>
                         </div>
-                      </a>
-                      <div className="dropdown-divider my-1" />
-                      <div className="px-2 py-1">
-                        <div className="small text-muted mb-1">Métricas</div>
-                        <a className="dropdown-item d-flex align-items-center gap-2 ps-4" href="#ventas" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('metrics') }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                            <path d="M2 13h2V7H2v6zm4 0h2V3H6v10zm4 0h2v-4h-2v4z" />
-                          </svg>
+                      </div>
+                      <div className="dropdown-divider my-2" />
+                      <div className="mb-1 fw-semibold">Métricas</div>
+                      <div className="d-flex flex-column gap-2">
+                        <a className="d-flex align-items-start text-decoration-none text-body rounded-3 p-2" href="#ventas" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('metrics') }}>
+                          <div className="me-3 d-flex align-items-center justify-content-center bg-light rounded-3" style={{width:44,height:44}}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                              <path d="M2 13h2V7H2v6zm4 0h2V3H6v10zm4 0h2v-4h-2v4z" />
+                            </svg>
+                          </div>
                           <div>
                             <div className="fw-semibold">Ventas</div>
                             <div className="small text-muted">Resumen de ventas</div>
                           </div>
                         </a>
-                        <a className="dropdown-item d-flex align-items-center gap-2 ps-4" href="#productos-metricas" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('metricsProducts') }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                            <path d="M3 2h10v4H3z" opacity="0.9" />
-                            <path d="M3 8h10v6H3z" opacity="0.6" />
-                          </svg>
+                        <a className="d-flex align-items-start text-decoration-none text-body rounded-3 p-2" href="#productos-metricas" onClick={e => { e.preventDefault(); setShowAdminMenu(false); onNavigate?.('metricsProducts') }}>
+                          <div className="me-3 d-flex align-items-center justify-content-center bg-light rounded-3" style={{width:44,height:44}}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                              <path d="M3 2h10v4H3z" opacity="0.9" />
+                              <path d="M3 8h10v6H3z" opacity="0.6" />
+                            </svg>
+                          </div>
                           <div>
                             <div className="fw-semibold">Productos</div>
                             <div className="small text-muted">Ventas por producto</div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { createUser } from '../services/api'
+import { notifySuccess } from '../utils/notify'
 
 type Props = { onClose?: () => void; onCreated?: (email: string) => void }
 
@@ -26,10 +27,16 @@ export default function CreateUser({ onClose, onCreated }: Props) {
     try {
       await createUser({ name, email, password })
       if (onCreated) onCreated(email)
-      else alert('Usuario creado correctamente')
+      else notifySuccess('Usuario creado correctamente')
       onClose?.()
     } catch (err: any) {
-      setError(err?.message || 'Error al crear usuario')
+      // El backend devuelve errores con formato: { message: "..." }
+      // En `api.post` esos errores se lanzan como `Error("409 Usuario existente...")`.
+      // Aquí extraemos el texto después del código de estado para mostrar sólo el mensaje.
+      const raw = err?.message || String(err)
+      const parsed = raw.replace(/^\d+\s*/, '')
+      // Mostrar el mensaje que venga del backend (campo `message`) o el texto crudo.
+      setError(parsed || raw)
     } finally {
       setLoading(false)
     }

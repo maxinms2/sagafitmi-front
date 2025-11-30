@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { searchProducts, updateProduct, deleteProduct, createProduct } from '../services/api'
+import { notifyError, notifyWarning, notifySuccess } from '../utils/notify'
 import ProductImageUploadModal from '../components/ProductImageUploadModal'
 import type { Product } from '../services/api'
 
@@ -29,6 +30,12 @@ export default function AdminProducts({ onBack }: Props) {
   const [productForUpload, setProductForUpload] = useState<Product | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
 
+  function extractError(err: any) {
+    const raw = err?.message || String(err || '')
+    const parsed = raw.replace(/^\d+\s*/, '')
+    return { raw, parsed }
+  }
+
   useEffect(() => {
     let mounted = true
 
@@ -43,7 +50,8 @@ export default function AdminProducts({ onBack }: Props) {
         setTotalElements(resp.totalElements ?? (resp.content ? resp.content.length : 0))
       } catch (err: any) {
         if (!mounted) return
-        setFetchError(err.message || 'Error al obtener productos')
+        const { raw, parsed } = extractError(err)
+        setFetchError(parsed || raw)
         setProducts([])
       } finally {
         if (mounted) setLoading(false)
@@ -76,12 +84,12 @@ export default function AdminProducts({ onBack }: Props) {
       setShowDeleteDialog(false)
       setProductToDelete(null)
     } catch (err: any) {
-      const msg = err?.message || ''
+      const { raw, parsed } = extractError(err)
       // Mostrar mensaje específico cuando el backend responde 403 Request failed
-      if (msg.includes('403') && msg.includes('Request failed')) {
-        window.alert('Error al eliminar, existen órdenes o items de carrito relacionadas')
+      if (raw.includes('403') && raw.includes('Request failed')) {
+        notifyWarning('Error al eliminar, existen órdenes o items de carrito relacionadas')
       } else {
-        window.alert(msg || 'Error eliminando producto')
+        notifyError(parsed || raw)
       }
     } finally {
       setDeleting(false)
@@ -184,9 +192,9 @@ export default function AdminProducts({ onBack }: Props) {
                     <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowCreateDialog(false)} disabled={creating}>Cancelar</button>
                     <button className="btn btn-sm btn-primary" onClick={async () => {
                       // Crear producto
-                      if (!newProduct.name || newProduct.name.trim() === '') { window.alert('El nombre es requerido'); return }
-                      if (newProduct.price === '' || isNaN(Number(newProduct.price))) { window.alert('Precio inválido'); return }
-                      if (Number(newProduct.price) <= 0) { window.alert('El precio debe ser mayor que 0'); return }
+                      if (!newProduct.name || newProduct.name.trim() === '') { notifyWarning('El nombre es requerido'); return }
+                      if (newProduct.price === '' || isNaN(Number(newProduct.price))) { notifyWarning('Precio inválido'); return }
+                      if (Number(newProduct.price) <= 0) { notifyWarning('El precio debe ser mayor que 0'); return }
                       setCreating(true)
                       try {
                         const created = await createProduct({ name: newProduct.name.trim(), description: newProduct.description.trim(), price: Number(newProduct.price) })
@@ -196,7 +204,8 @@ export default function AdminProducts({ onBack }: Props) {
                         setShowCreateDialog(false)
                         setNewProduct({ name: '', description: '', price: '' })
                       } catch (err: any) {
-                        window.alert(err?.message || 'Error creando producto')
+                          const { raw, parsed } = extractError(err)
+                          notifyError(parsed || raw)
                       } finally {
                         setCreating(false)
                       }
@@ -277,14 +286,15 @@ export default function AdminProducts({ onBack }: Props) {
                                 const updated = await updateProduct(p.id, payload)
                                 if (updated == null) {
                                   // backend indicates conflict or not found
-                                  window.alert('No se pudo actualizar: nombre posiblemente duplicado o producto no existe')
+                                  notifyWarning('No se pudo actualizar: nombre posiblemente duplicado o producto no existe')
                                 } else {
                                   // actualizar lista localmente
                                   setProducts(prev => prev.map(x => x.id === p.id ? { ...x, name: updated.name, description: updated.description, price: updated.price, mainImageUrl: updated.mainImageUrl } : x))
                                   setEditingId(null)
                                 }
                               } catch (err: any) {
-                                window.alert(err?.message || 'Error actualizando producto')
+                                const { raw, parsed } = extractError(err)
+                                notifyError(parsed || raw)
                               } finally {
                                 setSaving(false)
                               }

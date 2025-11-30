@@ -14,6 +14,24 @@ export const API_BASE =
   (import.meta.env.VITE_API_BASE_URL as string) ||
   'http://localhost:8081'
 
+/**
+ * Wrapper around fetch that normalizes network errors into a clear message
+ * indicating that the frontend could not connect to the backend.
+ */
+async function doFetch(input: RequestInfo, init?: RequestInit) {
+  try {
+    return await fetch(input, init)
+  } catch (e: any) {
+    // Fetch throws a TypeError on network failure / CORS blocked / dns failure
+    if (e instanceof TypeError) {
+      throw new Error(
+        `No se pudo establecer conexión con el servidor`
+      )
+    }
+    throw e
+  }
+}
+
 export async function post<T>(path: string, body: unknown): Promise<T> {
   const url = `${API_BASE}${path}`
   const token = getToken()
@@ -22,7 +40,7 @@ export async function post<T>(path: string, body: unknown): Promise<T> {
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, {
+  const res = await doFetch(url, {
     method: 'POST',
     headers,
     body: JSON.stringify(body)
@@ -197,7 +215,7 @@ export async function deleteCartItem(itemId: number): Promise<void> {
   const headers: Record<string, string> = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'DELETE', headers })
+  const res = await doFetch(url, { method: 'DELETE', headers })
 
   // 204 No Content -> éxito silencioso
   if (res.status === 204) return
@@ -228,7 +246,7 @@ export async function updateCartItemQuantity(itemId: number, quantity: number): 
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'PUT', headers, body: JSON.stringify({ quantity }) })
+  const res = await doFetch(url, { method: 'PUT', headers, body: JSON.stringify({ quantity }) })
 
   const text = await res.text()
   let data: any = null
@@ -257,7 +275,7 @@ export async function createOrderForUser(userId: number): Promise<OrderDTO> {
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({}) })
+  const res = await doFetch(url, { method: 'POST', headers, body: JSON.stringify({}) })
 
   const text = await res.text()
   let data: any = null
@@ -290,7 +308,7 @@ export async function updateOrderStatus(orderId: number, status: string): Promis
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'PUT', headers })
+  const res = await doFetch(url, { method: 'PUT', headers })
 
   const text = await res.text()
   let data: any = null
@@ -330,7 +348,7 @@ async function get<T>(path: string, params?: Record<string, unknown>): Promise<T
   const headers: Record<string, string> = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { headers })
+  const res = await doFetch(url, { headers })
 
   const text = await res.text()
   let data: any = null
@@ -443,7 +461,7 @@ export async function updateProduct(id: number, body: Partial<Product>) {
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) })
+  const res = await doFetch(url, { method: 'PUT', headers, body: JSON.stringify(body) })
   const text = await res.text()
   let data: any = null
   if (text) {
@@ -463,7 +481,7 @@ export async function deleteProduct(id: number): Promise<void> {
   const headers: Record<string, string> = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'DELETE', headers })
+  const res = await doFetch(url, { method: 'DELETE', headers })
 
   // 204 No Content -> éxito silencioso
   if (res.status === 204) return
@@ -505,7 +523,7 @@ export async function updateUser(userId: number, body: Partial<{ name: string; r
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) })
+  const res = await doFetch(url, { method: 'PUT', headers, body: JSON.stringify(body) })
 
   const text = await res.text()
   let data: any = null
@@ -528,7 +546,7 @@ export async function deleteUser(userId: number): Promise<void> {
   const headers: Record<string, string> = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(url, { method: 'DELETE', headers })
+  const res = await doFetch(url, { method: 'DELETE', headers })
 
   // 204 No Content -> éxito silencioso
   if (res.status === 204) return
@@ -563,7 +581,7 @@ export async function uploadProductImage(productId: number, file: File | Blob, m
   const form = new FormData()
   form.append('file', file)
 
-  const res = await fetch(url, {
+  const res = await doFetch(url, {
     method: 'POST',
     headers, // IMPORTANT: do not set 'Content-Type', browser sets multipart boundary
     body: form,

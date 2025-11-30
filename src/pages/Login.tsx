@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { login as loginRequest } from '../services/auth'
 import { setToken, setUser as setUserInStorage } from '../services/storage'
+import { notifySuccess } from '../utils/notify'
 
 type Props = { onBack?: () => void; onLogin?: (email: string) => void }
 
@@ -24,7 +25,7 @@ export default function Login({ onBack, onLogin }: Props) {
         else setUserInStorage(email)
         console.log('Login successful, token saved')
         if (onBack) onBack()
-        else alert('Login correcto')
+        else notifySuccess('Login correcto')
       } else {
         throw new Error('Respuesta inválida: no se recibió token')
       }

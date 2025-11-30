@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { searchProducts, API_BASE, addToCartByUserEmail } from '../services/api'
 import type { Product } from '../services/api'
 import { getUser as getStoredUser } from '../services/storage'
@@ -70,6 +70,29 @@ export default function Home() {
     price?: number
   } | null>(null)
   const [modalQuantity, setModalQuantity] = useState<number>(1)
+
+  const [notification, setNotification] = useState<{
+    variant: 'success' | 'warning' | 'danger' | 'info'
+    title?: string
+    message: string
+  } | null>(null)
+  const timeoutRef = useRef<number | null>(null)
+
+  function showNotification(
+    variant: 'success' | 'warning' | 'danger' | 'info',
+    message: string,
+    title?: string,
+    duration = 4000
+  ) {
+    setNotification({ variant, title, message })
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current)
+    }
+    timeoutRef.current = window.setTimeout(() => {
+      setNotification(null)
+      timeoutRef.current = null
+    }, duration)
+  }
 
   // extraemos la función de carga para poder invocarla desde el formulario de búsqueda
   useEffect(() => {
@@ -144,6 +167,20 @@ export default function Home() {
   return (
     <div className="bg-light" style={{ minHeight: '100vh' }}>
       <main className="container" style={{ minHeight: 'calc(100vh - 80px)', paddingTop: '2rem' }}>
+        {/* Notificación flotante (Bootstrap alert) */}
+        {notification && (
+          <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 2000, minWidth: 320 }}>
+            <div className={`alert alert-${notification.variant} alert-dismissible fade show`} role="alert">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  {notification.title && <strong className="me-1">{notification.title}</strong>}
+                  <div>{notification.message}</div>
+                </div>
+                <button type="button" className="btn-close" aria-label="Cerrar" onClick={() => setNotification(null)} />
+              </div>
+            </div>
+          </div>
+        )}
         <header className="d-flex align-items-center justify-content-between mb-4">
           <div>
             <h1 className="h4 mb-0">Productos</h1>
@@ -191,9 +228,6 @@ export default function Home() {
               value={descriptionFilter}
               onChange={(e) => setDescriptionFilter(e.target.value)}
             />
-          </div>
-          <div className="col-auto">
-            <button className="btn btn-sm btn-primary" type="submit">Buscar</button>
           </div>
           <div className="col-auto">
             <button
@@ -400,13 +434,13 @@ export default function Home() {
                         try {
                           const stored = getStoredUser()
                           if (!stored) {
-                            alert('Debes iniciar sesión para agregar productos al carrito')
+                            showNotification('warning', 'Debes iniciar sesión para agregar productos al carrito', 'Acceso requerido')
                             return
                           }
                           // stored is the user email (como guarda App.tsx)
                           const productId = modalProduct?.id
                           if (!productId) {
-                            alert('Producto inválido')
+                            showNotification('danger', 'Producto inválido', 'Error')
                             return
                           }
                           await addToCartByUserEmail(stored, productId, modalQuantity)
@@ -417,10 +451,13 @@ export default function Home() {
                           } catch (e) {
                             // fallback no-op
                           }
-                          alert('Producto añadido al carrito')
+                          showNotification(
+                            'success',
+                            'Gracias — el producto se ha añadido al carrito con éxito. Revisa tu carrito para continuar con la compra.'
+                          )
                         } catch (err: any) {
                           console.error('Error al añadir al carrito', err)
-                          alert(err?.message || 'Error al añadir al carrito')
+                          showNotification('danger', err?.message || 'Error al añadir al carrito', 'Error')
                         } finally {
                           // Cerrar el modal independientemente del resultado
                           closeModal()
