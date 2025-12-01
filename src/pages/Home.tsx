@@ -178,12 +178,13 @@ export default function Home() {
 
   // cargar imágenes del producto cuando se abre la modal con un product id
   useEffect(() => {
-    if (!modalOpen || !modalProduct?.id) return
+    const productId = modalProduct?.id
+    if (!modalOpen || productId == null) return
     let mounted = true
     async function loadImgs() {
       setModalLoadingImages(true)
       try {
-        const imgs = await getProductImages(modalProduct.id)
+        const imgs = await getProductImages(productId as number)
         if (!mounted) return
         setModalImages(imgs || [])
         // seleccionar la imagen principal si existe

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Item = { id: string; type: 'success' | 'info' | 'warning' | 'danger'; message: string; title?: string }
 

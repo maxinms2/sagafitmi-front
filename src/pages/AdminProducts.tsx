@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { searchProducts, updateProduct, deleteProduct, createProduct } from '../services/api'
-import { notifyError, notifyWarning, notifySuccess } from '../utils/notify'
+import { notifyError, notifyWarning } from '../utils/notify'
 import ProductImageUploadModal from '../components/ProductImageUploadModal'
 import type { Product } from '../services/api'
 
