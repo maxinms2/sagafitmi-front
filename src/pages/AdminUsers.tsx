@@ -91,9 +91,6 @@ export default function AdminUsers({ onBack }: Props) {
             </select>
           </div>
           <div className="col-auto">
-            <button className="btn btn-sm btn-primary" type="submit">Aplicar</button>
-          </div>
-          <div className="col-auto">
             <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setNameFilter(''); setEmailFilter(''); setRoleFilter('ALL') }}>Limpiar</button>
           </div>
         </form>
@@ -203,7 +200,7 @@ export default function AdminUsers({ onBack }: Props) {
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Crear usuario</h5>
-                  <button type="button" className="btn-close" aria-label="Cerrar" onClick={() => setShowCreateDialog(false)} disabled={creating}></button>
+                  <button type="button" className="btn-close" aria-label="Cerrar" onClick={() => { setNewUser({ name: '', email: '', password: '', confirmPassword: '', role: 'USER' }); setShowCreateDialog(false) }} disabled={creating}></button>
                 </div>
                 <div className="modal-body">
                   <div className="mb-2">
@@ -238,7 +235,7 @@ export default function AdminUsers({ onBack }: Props) {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowCreateDialog(false)} disabled={creating}>Cancelar</button>
+                  <button className="btn btn-sm btn-outline-secondary" onClick={() => { setNewUser({ name: '', email: '', password: '', confirmPassword: '', role: 'USER' }); setShowCreateDialog(false) }} disabled={creating}>Cancelar</button>
                   <button className="btn btn-sm btn-primary" onClick={async () => {
                     // Validaciones simples
                     if (!newUser.name || newUser.name.trim() === '') { notifyWarning('El nombre es requerido'); return }
@@ -248,12 +245,27 @@ export default function AdminUsers({ onBack }: Props) {
                     if (newUser.password !== newUser.confirmPassword) { notifyWarning('Las contraseñas no coinciden'); return }
                     setCreating(true)
                     try {
+                      // Guardar el rol seleccionado antes de limpiar el estado
+                      const roleRequested = newUser.role
                       const created = await createUser({ name: newUser.name.trim(), email: newUser.email.trim(), password: newUser.password, role: newUser.role })
                       // Insertar al inicio de la lista
                       setUsers(prev => [created, ...prev])
                       setShowCreateDialog(false)
                       setNewUser({ name: '', email: '', password: '', confirmPassword: '', role: 'USER' })
                       notifySuccess('Usuario creado correctamente')
+
+                      // Si el backend asigna por defecto 'USER' y el usuario quería 'ADMIN', aplicar el update inmediatamente
+                      if (roleRequested === 'ADMIN') {
+                        try {
+                          const updated = await updateUser(created.id, { role: 'ADMIN' })
+                          if (updated) {
+                            setUsers(prev => prev.map(x => x.id === created.id ? { ...x, role: updated.role } : x))
+                          }
+                        } catch (err2: any) {
+                          const { raw: raw2, parsed: parsed2 } = extractError(err2)
+                          notifyError(parsed2 || raw2)
+                        }
+                      }
                     } catch (err: any) {
                       const { raw, parsed } = extractError(err)
                       notifyError(parsed || raw)
@@ -292,6 +304,9 @@ export default function AdminUsers({ onBack }: Props) {
                       setUserToDelete(null)
                     } catch (err: any) {
                       const { raw, parsed } = extractError(err)
+                      // Cerrar la modal de confirmación y limpiar selección antes de notificar
+                      setShowDeleteDialog(false)
+                      setUserToDelete(null)
                       if (raw.includes('403') && raw.includes('Request failed')) {
                         notifyWarning('Error al eliminar, existen órdenes o items de carrito relacionadas')
                       } else {

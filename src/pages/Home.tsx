@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { searchProducts, API_BASE, addToCartByUserEmail } from '../services/api'
+import { searchProducts, API_BASE, addToCartByUserEmail, getProductImages } from '../services/api'
 import type { Product } from '../services/api'
 import { getUser as getStoredUser } from '../services/storage'
 
@@ -49,6 +49,13 @@ function ProductImage({ src, alt, placeholder }: { src: string; alt: string; pla
   )
 }
 
+function resolveImageUrl(url: string) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/')) return `${API_BASE}${url}`
+  return `${API_BASE}/${url}`
+}
+
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
   const [page, setPage] = useState(0) // API usa 0-based pages
@@ -69,6 +76,9 @@ export default function Home() {
     description?: string
     price?: number
   } | null>(null)
+  const [modalImages, setModalImages] = useState<{ id: number; url: string; mainImage: boolean }[]>([])
+  const [modalLoadingImages, setModalLoadingImages] = useState(false)
+  const [modalCurrent, setModalCurrent] = useState(0)
   const [modalQuantity, setModalQuantity] = useState<number>(1)
 
   const [notification, setNotification] = useState<{
@@ -153,6 +163,8 @@ export default function Home() {
   const closeModal = () => {
     setModalOpen(false)
     setModalProduct(null)
+    setModalImages([])
+    setModalCurrent(0)
   }
 
   // Cerrar con Escape
@@ -163,6 +175,31 @@ export default function Home() {
     if (modalOpen) window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [modalOpen])
+
+  // cargar imágenes del producto cuando se abre la modal con un product id
+  useEffect(() => {
+    if (!modalOpen || !modalProduct?.id) return
+    let mounted = true
+    async function loadImgs() {
+      setModalLoadingImages(true)
+      try {
+        const imgs = await getProductImages(modalProduct.id)
+        if (!mounted) return
+        setModalImages(imgs || [])
+        // seleccionar la imagen principal si existe
+        const mainIndex = imgs?.findIndex((i: any) => i.mainImage) ?? -1
+        if (mainIndex >= 0) setModalCurrent(mainIndex)
+        else setModalCurrent(0)
+      } catch (e: any) {
+        // no bloquear: dejar el src proporcionado como fallback
+        setModalImages([])
+      } finally {
+        if (mounted) setModalLoadingImages(false)
+      }
+    }
+    void loadImgs()
+    return () => { mounted = false }
+  }, [modalOpen, modalProduct?.id])
 
   return (
     <div className="bg-light" style={{ minHeight: '100vh' }}>
@@ -381,14 +418,37 @@ export default function Home() {
 
               <div style={{ display: 'flex', gap: 0, alignItems: 'stretch' }}>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: 12 }}>
-                  <img
-                    src={modalProduct.src}
-                    alt={modalProduct.alt || modalProduct.name}
-                    style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block', background: '#fff' }}
-                    onError={(e: any) => {
-                      if (e.currentTarget.src !== PLACEHOLDER) e.currentTarget.src = PLACEHOLDER
-                    }}
-                  />
+                  {modalLoadingImages ? (
+                    <div className="text-center py-4">
+                      <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Cargando...</span></div>
+                    </div>
+                  ) : modalImages && modalImages.length > 0 ? (
+                    <div style={{ width: '100%', maxWidth: 720 }}>
+                      <div className="d-flex align-items-center justify-content-center mb-2" style={{ height: 420 }}>
+                        <button className="btn btn-sm btn-outline-secondary me-2" type="button" onClick={() => setModalCurrent(i => (i - 1 + modalImages.length) % modalImages.length)} aria-label="Anterior">◀</button>
+                        <div style={{ width: '100%', height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: '#f8f9fa', borderRadius: 6 }}>
+                          <img
+                            src={resolveImageUrl(modalImages[modalCurrent].url)}
+                            alt={modalProduct?.alt || modalProduct?.name}
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
+                            onError={(e: any) => { if (e.currentTarget.src !== PLACEHOLDER) e.currentTarget.src = PLACEHOLDER }}
+                          />
+                        </div>
+                        <button className="btn btn-sm btn-outline-secondary ms-2" type="button" onClick={() => setModalCurrent(i => (i + 1) % modalImages.length)} aria-label="Siguiente">▶</button>
+                      </div>
+                      <div className="text-center small text-muted mb-2">{`Imagen ${modalCurrent + 1} de ${modalImages.length}`}</div>
+                      {/* Thumbnails removed: carousel is read-only and shows only the main image with prev/next */}
+                    </div>
+                  ) : (
+                    <img
+                      src={modalProduct.src}
+                      alt={modalProduct.alt || modalProduct.name}
+                      style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block', background: '#fff' }}
+                      onError={(e: any) => {
+                        if (e.currentTarget.src !== PLACEHOLDER) e.currentTarget.src = PLACEHOLDER
+                      }}
+                    />
+                  )}
                 </div>
                 <aside style={{ width: 340, maxWidth: '40%', padding: 16, boxSizing: 'border-box', borderLeft: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <h3 className="h5 mb-0">{modalProduct.name}</h3>

@@ -85,6 +85,9 @@ export default function AdminProducts({ onBack }: Props) {
       setProductToDelete(null)
     } catch (err: any) {
       const { raw, parsed } = extractError(err)
+      // Cerrar la modal y limpiar la selección antes de notificar
+      setShowDeleteDialog(false)
+      setProductToDelete(null)
       // Mostrar mensaje específico cuando el backend responde 403 Request failed
       if (raw.includes('403') && raw.includes('Request failed')) {
         notifyWarning('Error al eliminar, existen órdenes o items de carrito relacionadas')
@@ -121,9 +124,6 @@ export default function AdminProducts({ onBack }: Props) {
           </div>
           <div className="col-auto">
             <input className="form-control form-control-sm" placeholder="Buscar por descripción" value={descriptionFilter} onChange={e => setDescriptionFilter(e.target.value)} />
-          </div>
-          <div className="col-auto">
-            <button className="btn btn-sm btn-primary" type="submit">Buscar</button>
           </div>
           <div className="col-auto">
             <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setNameFilter(''); setDescriptionFilter(''); setPage(0) }}>Limpiar</button>
@@ -203,8 +203,11 @@ export default function AdminProducts({ onBack }: Props) {
                         setTotalElements(prev => prev + 1)
                         setShowCreateDialog(false)
                         setNewProduct({ name: '', description: '', price: '' })
-                      } catch (err: any) {
+                        } catch (err: any) {
                           const { raw, parsed } = extractError(err)
+                          // Primero limpiar la modal y luego cerrarla, según petición de UX
+                          setNewProduct({ name: '', description: '', price: '' })
+                          setShowCreateDialog(false)
                           notifyError(parsed || raw)
                       } finally {
                         setCreating(false)

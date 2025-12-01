@@ -599,3 +599,91 @@ export async function uploadProductImage(productId: number, file: File | Blob, m
   const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
   throw new Error(`${res.status} ${message}`)
 }
+
+/**
+ * Elimina una imagen de un producto.
+ * Endpoint: DELETE {API_BASE}/api/images/{productId}/{imageId}
+ * Response: 204 No Content -> éxito silencioso
+ */
+export async function deleteProductImage(productId: number, imageId: number): Promise<void> {
+  const url = `${API_BASE}/api/images/${productId}/${imageId}`
+  const token = getToken()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await doFetch(url, { method: 'DELETE', headers })
+
+  // 204 No Content -> éxito silencioso
+  if (res.status === 204) return
+
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try { data = JSON.parse(text) } catch (e) { data = text }
+  }
+
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+    throw new Error(`${res.status} ${message}`)
+  }
+
+  return
+}
+
+/**
+ * DTO para imágenes de producto
+ */
+export interface ProductImageDTO {
+  id: number
+  url: string
+  mainImage: boolean
+  productId: number
+}
+
+/**
+ * Obtiene las imágenes de un producto por su id.
+ * Endpoint: GET {API_BASE}/api/images/{productId}
+ * Ejemplo de respuesta:
+ * [
+ *   { "id": 3, "url": "/images/0a88e591-1506-46d4-812e-2b673a04fd0b.jpg", "mainImage": true, "productId": 2 }
+ * ]
+ */
+export function getProductImages(productId: number) {
+  return get<ProductImageDTO[]>(`/api/images/${productId}`)
+}
+
+/**
+ * Marca una imagen como principal para un producto.
+ * Endpoint: PUT {API_BASE}/api/images/main/{productId}/{imageId}
+ * Response esperado: array de `ProductImageDTO` (si el backend devuelve un objeto, lo envolvemos en array)
+ */
+export async function assignMainImage(productId: number, imageId: number): Promise<ProductImageDTO[]> {
+  const url = `${API_BASE}/api/images/main/${productId}/${imageId}`
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await doFetch(url, { method: 'PUT', headers })
+
+  const text = await res.text()
+  let data: any = null
+  if (text) {
+    try {
+      data = JSON.parse(text)
+    } catch (e) {
+      data = text
+    }
+  }
+
+  if (!res.ok) {
+    const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
+    throw new Error(`${res.status} ${message}`)
+  }
+
+  // El backend puede devolver un objeto o un array. Normalizamos a array.
+  if (Array.isArray(data)) return data as ProductImageDTO[]
+  if (data == null) return []
+  return [data as ProductImageDTO]
+}
