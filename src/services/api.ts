@@ -20,15 +20,53 @@ export const API_BASE =
  */
 async function doFetch(input: RequestInfo, init?: RequestInit) {
   try {
-    return await fetch(input, init)
+    const res = await fetch(input, init)
+
+    // Si el servidor respondió con error de servidor (5xx) o status 0 (posible fallo/CORS),
+    // despachamos un evento global para que la UI cierre sesión y notifique al usuario.
+    if (!res.ok && (res.status === 0 || (res.status >= 500 && res.status < 600))) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('server-disconnected', {
+            detail: { status: res.status, message: `No se pudo establecer conexión con el servidor` }
+          })
+        )
+      } catch (ev) {
+        // no-op
+      }
+    }
+
+    return res
   } catch (e: any) {
     // Fetch throws a TypeError on network failure / CORS blocked / dns failure
     if (e instanceof TypeError) {
-      throw new Error(
-        `No se pudo establecer conexión con el servidor`
-      )
+      try {
+        window.dispatchEvent(
+          new CustomEvent('server-disconnected', {
+            detail: { message: `No se pudo establecer conexión con el servidor` }
+          })
+        )
+      } catch (ev) {
+        // no-op: evitar romper en entornos sin window/event support
+      }
+      throw new Error(`No se pudo establecer conexión con el servidor`)
     }
     throw e
+  }
+}
+
+/**
+ * Si la respuesta es 401/403, despacha un evento global para indicar
+ * que la autenticación falló y la app debe forzar logout.
+ */
+function maybeDispatchAuth(res: Response, data?: any) {
+  try {
+    if (res.status === 401 || res.status === 403) {
+      const msg = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Autenticación requerida'
+      window.dispatchEvent(new CustomEvent('auth-required', { detail: { status: res.status, message: msg } }))
+    }
+  } catch (e) {
+    // no-op
   }
 }
 
@@ -58,6 +96,7 @@ export async function post<T>(path: string, body: unknown): Promise<T> {
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -231,6 +270,7 @@ export async function deleteCartItem(itemId: number): Promise<void> {
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -259,6 +299,7 @@ export async function updateCartItemQuantity(itemId: number, quantity: number): 
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -288,6 +329,7 @@ export async function createOrderForUser(userId: number): Promise<OrderDTO> {
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -321,6 +363,7 @@ export async function updateOrderStatus(orderId: number, status: string): Promis
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -361,6 +404,7 @@ async function get<T>(path: string, params?: Record<string, unknown>): Promise<T
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -468,6 +512,7 @@ export async function updateProduct(id: number, body: Partial<Product>) {
     try { data = JSON.parse(text) } catch (e) { data = text }
   }
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -493,6 +538,7 @@ export async function deleteProduct(id: number): Promise<void> {
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -532,6 +578,7 @@ export async function updateUser(userId: number, body: Partial<{ name: string; r
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -558,6 +605,7 @@ export async function deleteUser(userId: number): Promise<void> {
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }
@@ -623,6 +671,7 @@ export async function deleteProductImage(productId: number, imageId: number): Pr
   }
 
   if (!res.ok) {
+    maybeDispatchAuth(res, data)
     const message = (data && typeof data === 'object' ? data.message : data) || res.statusText || 'Request failed'
     throw new Error(`${res.status} ${message}`)
   }

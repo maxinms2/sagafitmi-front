@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getOrderById, getUserById, updateOrderStatus } from '../services/api'
+import { formatCurrency } from '../utils/format'
 import type { OrderDTO, UserResponse } from '../services/api'
 import { isAdmin } from '../services/jwt'
 
@@ -162,7 +163,7 @@ export default function OrderDetailModal({ orderId, show, onClose, onOrderUpdate
                     <div><strong>Creada:</strong> {new Date(order.createdAt).toLocaleString()}</div>
                     <div>
                       <strong>Total:</strong>
-                      <span className="ms-2 fw-bold text-primary">${order.total?.toFixed?.(2)}</span>
+                      <span className="ms-2 fw-bold text-primary">{formatCurrency(order.total)}</span>
                     </div>
                   </div>
                 </div>
@@ -185,8 +186,8 @@ export default function OrderDetailModal({ orderId, show, onClose, onOrderUpdate
                           <td className="text-muted">{idx + 1}</td>
                           <td>{it.product?.name ?? '—'}</td>
                           <td>{it.quantity}</td>
-                          <td className="text-end">${it.price?.toFixed?.(2)}</td>
-                          <td className="text-end">${(it.price * it.quantity).toFixed(2)}</td>
+                          <td className="text-end">{formatCurrency(it.price)}</td>
+                          <td className="text-end">{formatCurrency(it.price * it.quantity)}</td>
                         </tr>
                       ))}
                     </tbody>

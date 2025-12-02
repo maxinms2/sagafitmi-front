@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { searchProducts, updateProduct, deleteProduct, createProduct } from '../services/api'
 import { notifyError, notifyWarning } from '../utils/notify'
 import ProductImageUploadModal from '../components/ProductImageUploadModal'
+import { formatCurrency } from '../utils/format'
 import type { Product } from '../services/api'
 
 type Props = { onBack?: () => void }
@@ -269,7 +270,7 @@ export default function AdminProducts({ onBack }: Props) {
                         {isEditing ? (
                           <input type="number" step="0.01" min="0" className="form-control form-control-sm text-end" value={editValues.price === '' ? '' : (editValues.price ?? p.price ?? 0)} onChange={e => setEditValues(ev => ({ ...ev, price: e.target.value === '' ? '' : Number(e.target.value) }))} />
                         ) : (
-                          <div className="fw-semibold">${p.price?.toFixed(2)}</div>
+                          <div className="fw-semibold">{formatCurrency(p.price)}</div>
                         )}
                       </td>
                       <td>

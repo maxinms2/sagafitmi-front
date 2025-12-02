@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { searchProducts, API_BASE, addToCartByUserEmail, getProductImages } from '../services/api'
+import { formatCurrency } from '../utils/format'
 import type { Product } from '../services/api'
 import { getUser as getStoredUser } from '../services/storage'
 
@@ -346,7 +347,7 @@ export default function Home() {
                     <h2 className="h6 card-title mb-1">{p.name}</h2>
                     <p className="card-text text-muted small mb-2" style={{ flex: 1 }}>{p.description}</p>
                     <div className="d-flex align-items-center justify-content-between mt-3">
-                      <div className="fw-bold">${p.price?.toFixed(2)}</div>
+                      <div className="fw-bold">{formatCurrency(p.price)}</div>
                       <button className="btn btn-sm btn-outline-primary" onClick={() => openModal(imageSrc, p)}>Ver</button>
                     </div>
                   </div>
@@ -454,7 +455,7 @@ export default function Home() {
                 <aside style={{ width: 340, maxWidth: '40%', padding: 16, boxSizing: 'border-box', borderLeft: '1px solid rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <h3 className="h5 mb-0">{modalProduct.name}</h3>
                   <div className="text-muted small" style={{ flex: 1 }}>{modalProduct.description}</div>
-                  <div className="fw-bold" style={{ fontSize: 18 }}>${modalProduct.price?.toFixed(2)}</div>
+                  <div className="fw-bold" style={{ fontSize: 18 }}>{formatCurrency(modalProduct.price)}</div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <label className="small text-muted mb-0">Cantidad</label>

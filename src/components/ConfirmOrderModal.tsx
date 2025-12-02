@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getUserByEmail, createOrderForUser, getCartPriceMismatch } from '../services/api'
+import { formatCurrency } from '../utils/format'
 import type { OrderDTO, CartItemDTO } from '../services/api'
 
 type Props = {
@@ -105,9 +106,9 @@ export default function ConfirmOrderModal({ visible, onClose, user, total, onCon
         </div>
         <div className="card-body">
           <p>
-            ¿Deseas generar la orden por un total de <strong>${adjustedTotal.toFixed(2)}</strong>?
+            ¿Deseas generar la orden por un total de <strong>{formatCurrency(adjustedTotal)}</strong>?
             {mismatchItems.length > 0 && (
-              <div className="text-muted small">Total original: ${total.toFixed(2)}</div>
+              <div className="text-muted small">Total original: {formatCurrency(total)}</div>
             )}
           </p>
           <div className="mt-3">
@@ -124,8 +125,8 @@ export default function ConfirmOrderModal({ visible, onClose, user, total, onCon
                         <div className="fw-semibold">{it.product.name}</div>
                         <div className="text-muted small">{it.product.description}</div>
                         <div className="mt-1">
-                          Precio anterior: <strong>${((it.currentPrice ?? it.product.price)).toFixed(2)}</strong>
-                          {' '}— Nuevo precio: <strong>${(it.product.price).toFixed(2)}</strong>
+                          Precio anterior: <strong>{formatCurrency((it.currentPrice ?? it.product.price))}</strong>
+                          {' '}— Nuevo precio: <strong>{formatCurrency(it.product.price)}</strong>
                         </div>
                       </li>
                     ))}

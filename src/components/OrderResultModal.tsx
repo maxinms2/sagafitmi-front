@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { OrderDTO, CartItemDTO } from '../services/api'
 import { getCartPriceMismatch } from '../services/api'
+import { formatCurrency } from '../utils/format'
 
 type Props = {
   visible: boolean
@@ -74,8 +75,8 @@ export default function OrderResultModal({ visible, order, onClose }: Props) {
               }, 0)
               return (
                 <div>
-                  <div><strong>Total:</strong> ${ (mismatchItems.length > 0 ? adjustedTotal : order.total).toFixed(2) }</div>
-                  {mismatchItems.length > 0 && <div className="text-muted small">Total original: ${order.total.toFixed(2)}</div>}
+                  <div><strong>Total:</strong> {formatCurrency(mismatchItems.length > 0 ? adjustedTotal : order.total)}</div>
+                  {mismatchItems.length > 0 && <div className="text-muted small">Total original: {formatCurrency(order.total)}</div>}
                 </div>
               )
             })()}
@@ -91,12 +92,12 @@ export default function OrderResultModal({ visible, order, onClose }: Props) {
                     <li key={idx} className="list-group-item">
                       <div className="fw-semibold">{it.product.name}</div>
                       <div className="text-muted small">{it.product.description}</div>
-                      <div className="d-flex justify-content-between mt-2">
+                        <div className="d-flex justify-content-between mt-2">
                         <div>Cantidad: {it.quantity}</div>
-                        <div>Precio: ${displayPrice.toFixed(2)} — Subtotal: ${(displayPrice * it.quantity).toFixed(2)}</div>
+                        <div>Precio: {formatCurrency(displayPrice)} — Subtotal: {formatCurrency(displayPrice * it.quantity)}</div>
                       </div>
                       {mi && (
-                        <div className="text-muted small mt-1">Precio anterior: ${mi.currentPrice.toFixed(2)}</div>
+                        <div className="text-muted small mt-1">Precio anterior: {formatCurrency(mi.currentPrice)}</div>
                       )}
                     </li>
                   )

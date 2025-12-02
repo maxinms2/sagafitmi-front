@@ -1,5 +1,6 @@
 // React import not required with the automatic JSX runtime
 import type { CartItemDTO } from '../services/api'
+import { formatCurrency } from '../utils/format'
 
 type Props = {
   visible: boolean
@@ -84,8 +85,8 @@ export default function CartModal({ visible, onClose, items, loading, error, del
                     </div>
                     <div className="text-end d-flex align-items-center gap-2">
                       <div className="me-2 text-end">
-                        <div>${(it.currentPrice || it.product.price).toFixed(2)}</div>
-                        <div className="text-muted small">Subtotal: ${((it.currentPrice || it.product.price) * it.quantity).toFixed(2)}</div>
+                        <div>{formatCurrency(it.currentPrice || it.product.price)}</div>
+                        <div className="text-muted small">Subtotal: {formatCurrency((it.currentPrice || it.product.price) * it.quantity)}</div>
                       </div>
                       <button
                         className="btn btn-sm btn-outline-danger p-1 d-inline-flex align-items-center justify-content-center"
@@ -119,7 +120,7 @@ export default function CartModal({ visible, onClose, items, loading, error, del
               Generar orden de compra
             </button>
           </div>
-          <div className="fw-semibold text-primary fs-5">Total: ${total.toFixed(2)}</div>
+          <div className="fw-semibold text-primary fs-5">Total: {formatCurrency(total)}</div>
         </div>
       </div>
     </div>
